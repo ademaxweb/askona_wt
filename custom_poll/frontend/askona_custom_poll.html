@@ -1,0 +1,457 @@
+<%
+
+    var _handler = ArrayOptFirstElem(XQuery('for $elem in custom_web_templates where $elem/code="askona_poll_handler" return $elem'));
+    var poll_id = Request.Query.GetOptProperty('poll_id', undefined);
+
+    OPTIONS = 
+    {
+        handler_id: _handler.id.Value,
+        poll_id: poll_id
+    };
+
+%>
+<!-- <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> -->
+<html>
+<head>
+	<title>Опросы</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+   	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<!-- <link rel="stylesheet" href="css/normalize.css">
+	<link rel="stylesheet" href="css/main.css">
+	<link rel="stylesheet" href="css/queries.css"> -->
+</head>
+<!--
+	Изменили стиль убрав правую колонку
+-->
+<style>
+
+.left-col {
+    float: left;
+    width: 100%;
+    margin-right: 2.12765957%;
+}
+
+.a-btn.disabled, a.a-btn.disabled, button.a-btn.disabled, input[type="submit"].a-btn.disabled {
+    cursor: default;
+    background-color: transparent;
+    color: #00b9bf;
+}
+
+.a-btn:hover {
+    background-color: transparent;
+    color: #00787c !important;
+}
+
+.a-btn:hover:not(.disabled), a.a-btn:hover:not(.disabled), button.a-btn:hover:not(.disabled), input[type="submit"].a-btn:hover:not(.disabled) {
+    border-color: #00787c;
+    background-color: transparent;
+    color: #fff;
+}
+
+.block-title {
+	border-color: #00787c;
+    background-color: #00b9bf;
+    padding: 10px;
+    border-radius: 5px;
+    color: white;
+}
+
+.modal__overlay {
+	position: fixed;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 99999;
+	background-color: rgba(0, 0, 0, .6);
+}
+
+.modal__window {
+	position: absolute;
+	margin: 0 auto;
+	background-color: #ffffff;
+	border-radius: 25px;
+	left: 50%;
+	top: 50%;
+	transform: translateX(-50%) translateY(-50%);
+	padding: 20px 100px;
+}
+
+.modal__buttons {
+	width: 100%;
+	display: flex;
+	justify-content: center;
+}
+
+.modal__title {
+	text-align: center;
+}
+
+.radio-item {
+	cursor: pointer;
+}
+.notif-progress {
+	background-color: #00b9bf;
+}
+.notif-content {
+	background-color: #00b9bf;
+}
+
+</style>
+
+<body>
+	<div class="main-wrapper">
+		<!-- 
+		**********************HEADER************************
+		 -->
+		<div class="a-container">
+			
+		</div>
+		<!-- 
+		**********************CONTANT************************
+		 -->
+		<div class="a-container">
+			<div class="clearfix a-card-wrap">
+				<div class="main-child left-col js-left">
+					<h2 id="poll_name"><span>Опрос</span></h2>
+					<p id="poll_description"></p>
+					<div class="comment-list">
+						<!-- <div class="comment-item">
+							<p class="comment-q">Вопрос 1</p>
+							<ul class="radio-group">
+								<li><a href="javascript:;" class="radio-item"><i></i>Ответ 1</a></li>
+								<li><a href="javascript:;" class="radio-item"><i></i>Ответ 2</a></li>
+								<li><a href="javascript:;" class="radio-item"><i></i>Ответ 3</a></li>
+								<li><a href="javascript:;" class="radio-item"><i></i>Ответ 4</a></li>
+								<li><a href="javascript:;" class="radio-item"><i></i>Ответ 5</a></li>
+							</ul>
+						</div>
+						<div class="comment-item">
+							<p class="comment-q">Вопрос 2</p>
+							<ul class="checkbox-group">
+								<li><a href="javascript:;" class="checkbox-item active"><i></i>Ответ 1</a></li>
+								<li><a href="javascript:;" class="checkbox-item"><i></i>Ответ 2</a></li>
+								<li><a href="javascript:;" class="checkbox-item"><i></i>Ответ 3</a></li>
+								<li><a href="javascript:;" class="checkbox-item"><i></i>Ответ 4</a></li>
+								<li><a href="javascript:;" class="checkbox-item"><i></i>Ответ 5</a></li>
+								<li><a href="javascript:;" class="checkbox-item"><i></i>Ответ 6</a></li>
+							</ul>
+						</div>
+						<div class="comment-item">
+							<p class="comment-q">Вопрос 3</p>
+							<textarea  class="a-input"></textarea>
+						</div> -->
+					</div>
+                    <!--disabled modal-close-btn-->
+					<div class="btn-wrap">
+						<button class="a-btn" id="submit-poll">Отправить</button>
+					</div>
+				</div>
+				<!-- <div class="right-col js-right">
+					<div class="a-col-4">
+						<h3>Другие опросы</h3>
+						<div class="a-col">
+							<a href="#" class="main-child">
+								Какое электронное обучение проводится в вашей компании?
+							</a>
+						</div>
+						<div class="a-col">
+							<a href="#" class="main-child">
+								Пользователи СДО. Кто они?
+							</a>
+						</div>
+						<div class="a-col">
+							<a href="#" class="main-child">
+								Оцените факторы, влияющие на эффективность обучения
+							</a>
+						</div>
+					</div>
+				</div> -->
+			</div>
+			
+		</div>
+
+		<div class="page-bottom">
+			<div class="a-container">
+				
+			</div>
+		</div>
+
+		<div id="modal1" class="modal__overlay">
+	        <div class="modal__window">
+				<h2 class="modal__title">Some title</h2>
+				<p class="modal__content"></p>
+				<div class="btn-wrap modal__buttons">
+					<button class="a-btn" id="close_modal">Закрыть</button>
+				</div>
+			</div>
+	    </div>
+
+	</div>
+	<!-- 
+	**********************FOOTER************************
+	 -->
+	<!-- <div class="a-container a-footer-wrap">
+		<div class="a-footer">
+			<div class="a-footer-item">
+				<ul>
+					<li><a href="#"><span>Основной сайт</span></a></li>
+					<li><a href="#"><span>Контакты</span></a></li>
+				</ul>
+			</div>
+			<div class="a-footer-item"><a href="#"><span>Обратная связь</span></a></div>
+			
+			<div class="a-copyright">© 2017 Альфа-Персонал</div>
+			<div class="a-lmm">Разработано в<img class="lmm-white" src="images/lmm1.svg" alt="Лабмедиа" /><img class="lmm-gray" src="images/lmm2.svg" alt="Лабмедиа" /></div>
+		</div>
+	</div> -->
+	
+	<!-- <script src="js/jquery.js"></script>
+	<script src="js/main.js"></script> -->
+</body>
+</html>
+
+<script>
+    (function(options){
+
+		function CreateQuestionBlock(question, is_block = false) {
+			const question_div = $("<div>", {
+				class: "comment-item",
+				"data-question-id": question.id,
+				"data-question-type": question.type
+			})
+
+			if (is_block) return question_div
+
+			const question_text = $("<p>", {
+				class: "comment-q",
+				text: question.title
+			})
+
+			question_div.append(question_text)
+
+			return question_div
+		}
+
+		function CreateChoiceQuestion(question) {
+			const question_div = CreateQuestionBlock(question)
+
+			const textarea = $("<textarea>", {
+				class: "a-input",
+				placeholder: "Объясните свой выбор"
+			}).hide()
+
+			const answers_list = $("<ul>", {
+				class: "radio-group"
+			})
+
+			for (const answer of question.answers) {
+				const answer_item = $("<li>")
+
+				const answer_item_text = $("<a>", {
+						class: "radio-item",
+						"data-answer-id": answer.id,
+						"data-comment-required": answer.comment_required
+				})
+				answer_item_text.html('<i></i>' + answer.value); 
+				// .append( $("<i>") ).text(answer.value)
+
+				answer_item.append(answer_item_text)
+
+				answer_item_text.click(function () {
+					question_div.find(".radio-item.active").removeClass("active")
+					$(this).addClass("active")
+
+					if ($(this).data("comment-required")) {
+						textarea.show()	
+					} else {
+						textarea.hide().val("")
+					}
+				})
+
+				answers_list.append(answer_item)
+			}
+
+			question_div.append(answers_list)
+			question_div.append(textarea)
+
+			return question_div
+		}
+
+		function CreateTextQuestion(question) {
+			const question_div = CreateQuestionBlock(question)
+
+			const textarea = $("<textarea>", {
+				class: "a-input",
+				placeholder: "Место для ответа"
+			})
+
+			question_div.append(textarea)
+
+			return question_div
+		}
+
+		function CreateBlockTitle(question) {
+			const question_div = CreateQuestionBlock(question, true);
+
+			const question_block_title = $("<p>", {
+				class: "block-title",
+				text: question.title
+			})
+
+			question_div.append(question_block_title)
+
+			return question_div
+		}
+
+		function RenderQuestions(questions) {
+
+			for (const question of questions) {
+				switch (question.type) {
+					case "choice":
+						var question_elem = CreateChoiceQuestion(question)
+						break
+
+					case "text":
+						var question_elem = CreateTextQuestion(question)
+						break
+
+					case "block":
+						var question_elem = CreateBlockTitle(question)
+						break
+				}
+				$(".comment-list").append(question_elem)
+			}
+
+		}
+
+        function fillPage() {
+            $.ajax({
+                type: "POST",
+                url: "/custom_web_template.html?object_id=" + options.handler_id,
+                secureuri: false,
+                dataType: "json",
+                data:
+                    {
+                        poll_id: options.poll_id
+                    },
+                    success: function (response, textStatus, jqXHR)
+                    {   
+						if (!response.success) return
+                        
+						RenderQuestions(response.data.questions)
+
+						$("#poll_description").html(response.data.description)
+						$("#poll_name").append(response.data.name)
+						// setEvents();
+                    }
+                });
+            }
+        
+		function BuildResult() {
+			const result = [];
+
+			$(".comment-item").each(function() {
+				const question = {
+					id: $(this).data("question-id"),
+					value: null,
+					comment: null,
+					comment_required: false
+				}
+
+				switch ($(this).data("question-type")) {
+					case "block":
+						return
+
+					case "choice":
+						const selected = $(this).find(".active")
+						if (!selected.length) break
+
+						question.value = selected.data("answer-id") 
+
+						if (!selected.data("comment-required")) break
+						question.comment_required = true
+						question.comment = $(this).find(".a-input").val()
+						break
+					
+					case "text":
+						question.value = $(this).find(".a-input").val()
+						break
+				}
+
+				result.push(question)
+			})
+
+			return result
+		}
+
+		function SendResult() {
+			const result = BuildResult()
+
+			const bad_results = result.filter((r) => {
+				return !r.value || (!!r.comment < r.comment_required)
+			})
+
+			if (bad_results.length) {
+				ShowModal("Ошибка!", "Вы ответили не на все вопросы")
+				return;
+			}
+
+			$.ajax({
+                type: "POST",
+                url: "/custom_web_template.html?object_id=" + options.handler_id,
+                secureuri: false,
+                dataType: "json",
+                data: {
+					action: "finish_poll",
+					poll_id: options.poll_id,
+					answers: JSON.stringify(result.map( ({comment_required, ...r}) => r ))
+				},
+				success: function (response, textStatus, jqXHR) {   
+					ShowModal(response.success ? "Успех!" : "Ошибка!", response.message)
+				}
+			});
+		}
+
+
+		function OpenModal() {
+			$(".modal__overlay").fadeIn(200)
+			$("body").css("overflow-y", "hidden");
+		}
+
+		function HideModal() {
+			$(".modal__overlay").fadeOut(200)
+			$("body").css("overflow-y", "auto");
+		}
+
+		function ShowModal(title, content) {
+			$(".modal__title").text(title)
+			$(".modal__content").text(content)
+			OpenModal()
+		}
+
+        $(document).ready(function(){
+			$("#modal1").hide()
+			$("#submit-poll").click(SendResult)
+			$("#close_modal").click(HideModal)
+
+			$(".modal__overlay").on("click", function(event) {
+				if (!event.target) {
+					event.target = event.srcElement
+				}
+				if ($(event.target).closest(".modal__window").length){
+					return;
+				} 
+				event.preventDefault();
+
+				HideModal();
+			})
+
+			
+
+            fillPage()
+        });
+
+    })(<%=tools.object_to_text(OPTIONS, 'json')%>)
+</script>

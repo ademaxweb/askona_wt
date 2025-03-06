@@ -1,0 +1,611 @@
+<script>
+    $(document).ready(function(){
+        setModal();
+    
+        setCustomSelect();
+    
+        setTabs();
+    
+        setEvents();
+    
+        percentProgress();
+    
+        sliderSwipe();
+    
+    });
+    
+    function setEvents(){
+        $(".a-user-data").unbind("click").click(function() {
+            $(this).closest(".a-user-block").toggleClass("a-user-block-o");
+            $(".a-search").removeClass("active");
+            $(".a-burger").removeClass("a-burger-o");
+        });
+    
+        $(".a-search input").on("input", function() {
+            if($(this).val() != ""){
+                $(this).closest(".a-search").next().removeClass("disabled");
+            } else {
+                $(this).closest(".a-search").next().addClass("disabled");
+            }
+        });
+    
+        $(".a-search-btn").unbind("click").click(function() {
+            $(this).parent().toggleClass("active");
+            $(this).parent().find("input").focus();
+            $(".a-user-block").removeClass("a-user-block-o");
+            $(".a-burger").removeClass("a-burger-o");
+        });
+    
+        $(".a-burger").unbind("click").click(function() {
+            $(this).toggleClass("a-burger-o");
+            $(".a-search").removeClass("active");
+            $(".a-user-block").removeClass("a-user-block-o");
+        });
+    
+        $(".a-calendar-switch i").click(function() {
+    
+            if( $(this).closest(".tabs").find("a.active").index() ) {
+                $(this).closest(".tabs").find("a").eq(0).click();
+            } else {
+                $(this).closest(".tabs").find("a").eq(1).click();
+            }
+    
+        });
+    
+        $(".month-now").unbind("click").click(function() {
+            $(this).closest(".month-now-wrap").toggleClass("opened");
+        });
+        $(".month-now-cal span").unbind("click").click(function() {
+            $(this).closest("table").find("td.date-selected").removeClass("date-selected");
+            $(this).parent().addClass("date-selected");
+            $(".month-now").trigger("click");
+        });
+    
+        $(".a-mark span").unbind("click").click(function() {
+            var __this  = $(this);
+            var thisInd = $(__this).index();
+    
+            $(__this).parent().find("span").removeClass("active");
+            $(__this).parent().find("span").each(function(i) {
+                if ($(this).index() <= thisInd){
+                    $(this).addClass("active");
+                } 
+            });
+        });
+    
+        $(".radio-item").unbind("click").click(function() {
+            var __this  = $(this);
+    
+            $(__this).closest(".radio-group").find(".radio-item").removeClass("active");
+            $(__this).addClass("active");
+        });	
+    
+        $(".checkbox-item").unbind("click").click(function() {
+            $(this).toggleClass("active");
+        });	
+    
+        $(".faq-item").unbind("click").click(function() {
+            $(this).toggleClass("opened");
+        });
+    
+        $(".faq-tabs span.custom-option").click(function() {
+            var showTab = $(this).index() + 1;
+            $(".faq-tabs a[rel='faq-tab-" +showTab+ "']").click();
+        });
+    
+        $(".faq-tabs li a").click(function() {
+            var showTab = $(this).parent().index();
+            var textTab= $(this).text();
+    
+            $(".faq-tabs span.custom-option").removeClass("selection");
+            $(".faq-tabs span.custom-option").eq(showTab).addClass("selection");
+            $(".faq-tabs .custom-select-trigger").text(textTab);
+        });
+    
+        $(".map-open").unbind("click").click(function() {
+            $("#map-wrap").fadeIn(300, function(){
+                $("#map, .map-help").delay(1000).fadeIn(500, function(){
+                    mapInit();
+                    getCircular();
+                });
+            });
+            $(".map-close, .pers-map-close").unbind("click").click(function() {
+                $("#map-wrap").fadeOut(300);
+                $("#map, .map-help").hide();
+            });
+            $(".map-close, .pers-map-close").unbind("touchstart").on("touchstart", function(){
+                $("#map-wrap").fadeOut(300);
+                $("#map, .map-help").hide();
+            });
+            function closeMapPoint(userEvent){
+                $("#map-wrap").unbind(userEvent).on(userEvent, function(){
+                    if (!event.target) {
+                      event.target = event.srcElement
+                    }
+                    if($(event.target).closest(".map-point").length){
+                        return;
+                    } else{
+                        $(".map-point").removeClass("opened");
+                    }
+                });
+            }
+            closeMapPoint("touchend");
+            closeMapPoint("click");
+        });
+    
+        if ('ontouchstart' in window) {
+            var touchmove = false;
+            $(".map-point").on("touchmove", function(){
+                console.log("move");
+                touchmove = true;
+            });
+            $(".map-point").on("touchend",function() {
+                if(!touchmove){
+                    if (!event.target) {
+                      event.target = event.srcElement
+                    }
+                    if( $(event.target).closest(".map-point-tip").length){
+                        return;
+                    } else {
+                        $(".map-point").not(this).removeClass("opened")
+                        $(this).toggleClass("opened");
+                    }
+                }
+                touchmove = false;
+            });
+        } else{
+            $(".map-point").on("click",function(event) {
+                if (!event.target) {
+                  event.target = event.srcElement
+                }
+                if( $(event.target).closest(".map-point-tip").length){
+                    return;
+                } else {
+                    $(".map-point").not(this).removeClass("opened")
+                    $(this).toggleClass("opened");
+                }
+            });
+        }
+    
+        $(".reserve-slide-open h2").unbind("click").click(function() {
+            $(this).closest(".reserve-item").toggleClass("opened");
+            $(this).closest(".reserve-item").find(".reserve-slide").slideToggle(300);
+        });
+    
+        $(".pers-cell-heading a").unbind("click").click(function() {
+            $(this).closest(".pers-row").toggleClass("opened");
+            $(this).closest(".pers-row").find(".pers-slide").slideToggle(300);
+        });
+    
+        $(".a-chat-open").unbind("click").click(function() {
+            var chat =$(this).attr("data-href");
+            $(chat).fadeIn(400);
+        });
+        
+        $(".a-chat-head").unbind("click").click(function() {
+            $(this).closest(".a-chat-wrap").fadeOut(300);
+        });
+    
+        // $(".reservist-theme").unbind("click").click(function() {
+        // 	if (!event.target) {
+        // 	  event.target = event.srcElement
+        // 	}
+        // 	if(!$(event.target).closest(".reservist-tip").length){
+        // 		$(".reservist-theme").not(this).removeClass("opened");
+        // 		$(this).toggleClass("opened");
+        // 	}
+        // });
+        
+        // $(".reservist-tip-close").unbind("click").click(function() {
+        // 	$(this).closest(".reservist-theme").removeClass("opened");
+        // });
+    
+        $(document).on("mouseup", function (event){
+            if (!event.target) {
+              event.target = event.srcElement
+            }
+    
+            var targetElem1 = $(event.target).closest(".a-search").length;
+            var targetElem2 = $(event.target).closest(".a-user-block").length;
+            var targetElem3 = $(event.target).closest(".a-burger-w").length;
+            var targetElem4 = $(event.target).closest(".month-now-wrap").length;
+            var targetElem5 = $(event.target).closest(".map-point").length;
+            // var targetElem6 = $(event.target).closest(".reservist-theme").length;
+    
+            if (targetElem1 || targetElem2 || targetElem3 || targetElem4 || targetElem5){
+                return;
+            } else{
+                $(".a-search").removeClass("active");
+                $(".a-user-block").removeClass("a-user-block-o");
+                $(".a-burger").removeClass("a-burger-o");
+                $(".month-now-wrap").removeClass("opened");
+                $(".map-point").removeClass("opened");
+                // $(".reservist-theme").removeClass("opened")
+            }
+        });
+    
+        $(document).scroll(function() {
+            var __this = $(this);
+            var __scroll = $(__this).scrollTop();
+            var __block = $(__this).find(".js-left");
+    
+            if($(__block).length){
+                var docWidth = $(__this).width();
+                var cardPos = $(__block).offset().top - 20;
+                var fixedLeft = $(".js-right").offset().left;
+                var fixedWidth = $(".js-right").outerWidth();
+    
+                if(__scroll >= cardPos && docWidth > 940){
+    
+                    $(".js-right").css({
+                        position: "fixed",
+                        top: "20px",
+                        left: fixedLeft+"px",
+                        width: fixedWidth+"px"
+                    });
+                } else {
+                    $(".js-right").removeAttr("style");
+                }
+            }
+            // console.log(docWidth+", "+$(__this).scrollTop()+", "+cardPos);
+        });
+    
+        $(".a-exclude-close").unbind("click").click(function() {
+            $(this).closest(".a-pers-exclude").fadeOut(400, function() {
+                $(this).remove();
+            });
+        });
+    }
+    
+    // Модалки
+    function setModal() {
+        var open_modal = $('.open-modal');
+        var close = $('.modal-close, .modal-close-btn');
+        var close_wrap = $('.overlay');
+    
+        open_modal.on("click", function (event) {
+            event.preventDefault();
+            
+            var div = $(this).attr('data-href');
+            var divM = $(div).find('.a-modal');
+    
+            $('body').css("overflow-y", "hidden");
+            $(div).fadeIn(200,
+                function () {
+                    divM.animate({opacity: 1, top: '10%'}, 300);
+                }
+            );
+        });
+    
+        close.on("click", function (event) {
+            event.preventDefault();
+            var div = $(this).closest('.a-modal');
+            var overlay = $(div).closest('.overlay');
+            
+            div.animate({opacity: 0, top: '5%'}, 300,
+                function () {
+                    overlay.fadeOut(200);
+                    $('body').css("overflow-y", "auto");
+                }
+            );
+            
+        });
+        
+        close_wrap.on("click", function (event) {
+            if (!event.target) {
+              event.target = event.srcElement
+            }
+            if ($(event.target).closest(".a-modal").length){
+                return;
+            } 
+            event.preventDefault();
+            var div = $(this).find('.a-modal');
+            var overlay = $(this);
+            
+            div.animate({opacity: 0, top: '5%'}, 300,
+                function () {
+                    overlay.fadeOut(200);
+                    $('body').css("overflow-y", "auto");
+                }
+            );
+        });
+    }
+    
+    function setCustomSelect(){
+        $(".custom-select").each(function() {
+          var classes = $(this).attr("class"),
+              id      = $(this).attr("id"),
+              name    = $(this).attr("name");
+              width   = $(this).attr("data-width");
+          var template =  '<div class="' + classes + '">';
+              template += '<span class="custom-select-trigger">' + $(this).attr("placeholder") + '</span>';
+              template += '<div class="custom-options">';
+              $(this).find("option").each(function() {
+                template += '<span class="custom-option ' + $(this).attr("class") + '" data-value="' + $(this).attr("value") + '">' + $(this).html() + '</span>';
+              });
+          template += '</div></div>';
+          
+          $(this).wrap('<div style="width: '+width+';" class="custom-select-wrapper"></div>');
+          $(this).hide();
+          $(this).after(template);
+        });
+        $(".custom-option:first-of-type").hover(function() {
+          $(this).parents(".custom-options").addClass("option-hover");
+        }, function() {
+          $(this).parents(".custom-options").removeClass("option-hover");
+        });
+        $(".custom-select-trigger").on("click", function(event) {
+          var thisSelect = $(this).parents(".custom-select");
+          $(".custom-select").not(thisSelect).removeClass("opened");
+          $(thisSelect).toggleClass("opened");
+          event.stopPropagation();
+        });
+        $(".custom-option").on("click", function() {
+          $(this).parents(".custom-select-wrapper").find("select").val($(this).data("value"));
+          $(this).parents(".custom-options").find(".custom-option").removeClass("selection");
+          $(this).addClass("selection");
+          $(this).parents(".custom-select").removeClass("opened");
+          $(this).parents(".custom-select").find(".custom-select-trigger").text($(this).text());
+        });
+        $("html").mouseup(function(event){
+            if (!event.target) {
+              event.target = event.srcElement
+            }
+            if(!$(event.target).closest(".custom-select").length){
+                $(".custom-select").removeClass("opened")
+            }
+        });
+    }
+    
+    // Простые табы
+    function setTabs(){
+        $(".tab-content").hide();
+        $(".tabs a.active").each(function(){
+            var activeTabPre = $(this).attr('rel');
+            $("#"+activeTabPre).show();
+        });
+    
+        $(".tabs a").click(function() {
+            if ($(this).hasClass("disabled")) {
+                return;
+            }
+            $(this).closest(".tabs").next(".tab-group").find(".tab-content").hide();
+            var activeTab = $(this).attr("rel"); 
+            $("#"+activeTab).show();		
+    
+            $(this).closest(".tabs").find("a").removeClass("active");
+            $(this).addClass("active");  
+        });
+    }
+    
+    var notifTimeout;
+    function openNotif(notif){
+        clearTimeout(notifTimeout);
+    
+        $(".notif-wrap").hide();
+        $(notif).show();
+        if($(notif).find(".notif-progress").length){
+            notifTimeout = setTimeout(function(){
+                $(notif).fadeOut(600);
+            },5000);
+        }
+    
+        $(".notif-close").unbind("click").click(function(){
+            clearTimeout(notifTimeout);
+            $(this).closest(".notif-wrap").fadeOut(600);
+        });
+    }
+    
+    function mapInit() {
+        // var container = document.getElementById("map-wrap");
+        // var content = document.getElementById("map");
+    
+        // // Initialize Scroller
+        // this.scroller = new Scroller(render, {
+        // 	zooming: true
+        // });
+        var rect = container.getBoundingClientRect();
+        // Setup Scroller
+        var rect = container.getBoundingClientRect();
+        scroller.setDimensions(container.clientWidth, container.clientHeight, content.offsetWidth, content.offsetHeight);
+        // Event Handler
+        if ('ontouchstart' in window) {
+            container.addEventListener("touchstart", function(e) {
+                // Don't react if initial down happens on a form element
+                if (e.target.tagName.match(/input|textarea|select/i)) {
+                    return;
+                }	
+                scroller.doTouchStart(e.touches, e.timeStamp);
+                e.preventDefault();
+            }, false);
+            document.addEventListener("touchmove", function(e) {
+                scroller.doTouchMove(e.touches, e.timeStamp);
+            }, false);
+            document.addEventListener("touchend", function(e) {
+                scroller.doTouchEnd(e.timeStamp);
+            }, false);
+        } else {
+            var mousedown = false;
+            container.addEventListener("mousedown", function(e) {
+                // Don't react if initial down happens on a form element
+                if (e.target.tagName.match(/input|textarea|select/i)) {
+                    return;
+                }			
+                scroller.doTouchStart([{
+                    pageX: e.pageX,
+                    pageY: e.pageY
+                }], e.timeStamp);
+                mousedown = true;
+            }, false);
+            document.addEventListener("mousemove", function(e) {
+                if (!mousedown) {
+                    return;
+                }
+                scroller.doTouchMove([{
+                    pageX: e.pageX,
+                    pageY: e.pageY
+                }], e.timeStamp);
+                mousedown = true;
+            }, false);
+            document.addEventListener("mouseup", function(e) {
+                if (!mousedown) {
+                    return;
+                }
+                scroller.doTouchEnd(e.timeStamp);
+                mousedown = false;
+            }, false);		
+        }
+    }
+    
+    // Карта, прогресс меток
+    function getCircular(custom_color){
+        $(".point-process canvas, .point-finish canvas").each(function(){
+            var canvas = this,
+                ctx = canvas.getContext('2d'),
+                canvasValue = parseInt($(canvas).attr("data-value"));
+                halfW = canvas.width / 2,
+                halfH = canvas.height / 2,
+                radius = 20;
+                if (custom_color == undefined) {
+                    bColor = '#fff';
+                } else {
+                    bColor = custom_color;
+                }
+    
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'square';
+                ctx.textAlign = 'center';
+                ctx.beginPath();
+                ctx.strokeStyle = 'transparent';
+                ctx.arc(halfW, halfH, radius, 0, Math.PI * 2, false);
+                ctx.stroke();
+    
+            function draw() {
+                var v = 0;
+                var intId = setInterval(function() {
+                    if(v <= canvasValue){
+                        ctx.clearRect(0, 0, 150, 150);
+                        ctx.beginPath();
+                        ctx.strokeStyle = 'transparent';
+                        ctx.arc(halfW, halfH, radius, 0, Math.PI * 2, false);
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.strokeStyle = bColor;
+                        ctx.arc(halfW, halfH, radius, 0, Math.PI * 2 * (v * 0.01), false);
+                        // update();
+                        ctx.stroke();
+                        $(canvas).closest(".map-point-ind").find("span").text(v+"%");
+                        v++;
+                    } else {
+                        clearInterval(intId);
+                    }
+                }, 10);
+            }
+            draw();
+    
+            function update(value) {
+              ctx.save();
+              ctx.translate(halfW, halfH);
+              // ctx.rotate((1 / 2) * Math.PI);
+              ctx.translate(-halfW, -halfH);
+              ctx.fillText(canvasValue, halfW, halfH);
+              ctx.restore();
+            }
+        });
+    }
+    
+    //Animation handle
+    var start = 100;
+    
+    $(document).ready(function animate() {
+        setTimeout(function() {	
+            $(".map-help-handle i").animate({'left':'0'}, 1000);
+        }, start);
+    
+        setTimeout(function() {	
+            $(".map-help-handle i").animate({'left':'24px'}, 1000);
+            animate();
+        }, start);
+    });
+    
+    // прогресс прохождения
+    // function percentProgress(){
+    // 	var width = $('.js-progress').width();
+    // 	var parentWidth = $('.js-progress').offsetParent().innerWidth();
+    // 	var percent = width/parentWidth*100;
+    
+    // 	$('.js-progress').width("0");
+        
+    // 	$('.js-progress').animate({
+    //         width: percent + "%"
+    //     }, 1000)
+    // }
+    
+    
+    // 
+    function percentProgress() {
+        $(".js-progress").each(function() {
+            var self = $(this);
+            var percent = parseInt(self.context.style.width, 10);
+            var parentWidth = self.offsetParent().innerWidth();
+            var divPercentage = self.parent().find(".js-progress-percentage");
+            
+            self.width("0");
+    
+            jQuery({someValue: 0}).animate({someValue: percent}, {
+                duration: 1000,
+                easing:'swing',
+                step: function() {
+                    divPercentage.text(Math.ceil(this.someValue) + "%");
+                }
+            });
+    
+            self.animate({
+                width: percent + "%"
+            }, 1000);
+    
+        })
+    }
+    
+    // функция слайдера
+    function sliderSwipe() {
+    
+        var modalSlideRow = document.getElementById("modal-slide-row");
+        var startPos;
+        var endPos;
+        var modalSlideWidth = $(".modal-slide").width();
+        var windowWidth = window.innerWidth;
+        $(".modal-slide-rounds div").click(function() {
+            var self = $(this);
+            var roundIndex = self.index();
+            var marginValue = 0;
+            if (!self.hasClass("active")) {
+                $(".modal-slide-rounds div.active").removeClass("active");
+                self.addClass("active");
+                marginValue = ($(".modal-slide").width() * roundIndex) * (- 1);
+                $(".modal-slide-row").animate({"margin-left": marginValue});
+            }
+        })
+    
+        if (!!modalSlideRow) {
+            modalSlideRow.addEventListener("touchstart", function(e) {
+                startPos = e.changedTouches[0].clientX;
+            }, false)
+    
+            modalSlideRow.addEventListener("touchend", function(e) {
+                endPos = e.changedTouches[0].clientX;
+                var roundIndex = $(".modal-slide-rounds div.active").index();
+                var fromLeftToRight = startPos > endPos;
+                var fromRightToLeft = endPos > startPos;
+                var newRoundIndex;
+                fromLeftToRight ? newRoundIndex = $(".modal-slide-rounds div").eq(roundIndex + 1).index() : fromRightToLeft ? newRoundIndex = $(".modal-slide-rounds div").eq(roundIndex - 1).index() : false;
+    
+                if ((fromRightToLeft && roundIndex != 0) || (fromLeftToRight && newRoundIndex != -1)) {
+                    $(".modal-slide-rounds div.active").removeClass("active");
+                    $(".modal-slide-rounds div").eq(newRoundIndex).addClass("active");
+                    $(".modal-slide-row").animate({"margin-left": (320 * newRoundIndex) * (-1)});
+                }
+            }, false)
+        }
+    }
+    </script>
