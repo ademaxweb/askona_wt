@@ -173,7 +173,8 @@ function GetPollQuestions(_pollTe)
                 {
                     id: _a.id.Value,
                     value: _a.value.Value,
-                    comment_required: OptInt(_a.weight, null) == 3
+                    comment_required: OptInt(_a.weight, null) == 3,
+                    weight: OptInt(_a.weight, 0)
                 }
             );
         }
