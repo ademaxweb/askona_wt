@@ -213,6 +213,7 @@ function GetPollData(_poll_id)
         {
             id: _poll_te.id.Value,
             name: _poll_te.name.Value,
+            code: _poll_te.code.Value,
             description: _poll_te.desc.Value,
             completed: _poll_te.completed.Value,
             questions: _questions

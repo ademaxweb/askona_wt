@@ -324,6 +324,9 @@
                         
 						RenderQuestions(response.data.questions)
 
+						options.poll_code = response.data.code
+						console.log(options)
+
 						$("#poll_description").html(response.data.description)
 						$("#poll_name").append(response.data.name)
 						// setEvents();
@@ -432,33 +435,6 @@
 			}
 
 			return result
-		}
-
-		function BuildValuesDescriptionText(values) {
-			const descs = BuildValuesDescriptions(values)
-
-			const elems = []
-
-			for (const {title, desc, grade} of descs) {
-				const elem = $("<div>", {
-					class: "value_desc"
-				})
-
-				const elem_title = $("<h3>", {
-					class: "value_desc__title",
-					text: `${title} - ${grade}`
-				})
-
-				const elem_text = $("<p>", {
-					class: "value_desc__text",
-					text: desc
-				})
-
-				elem.append(elem_title).append(elem_text)
-				elems.push()
-			}
-
-			return elems
 		}
 
 		function SendResult() {
