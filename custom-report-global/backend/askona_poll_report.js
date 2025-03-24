@@ -1,3 +1,5 @@
+Request.RespContentType = 'application/json';
+Request.AddRespHeader("Access-Control-Allow-Origin", "*");
 var _log_tag = "poll_report"
 EnableLog(_log_tag)
 
@@ -25,7 +27,7 @@ function ParseQueryParams() {
     }
 }
 
-function AddColumn(columns, key, text)
+function AddColumn(columns, text, key)
 {
     columns.push(
         {
@@ -35,14 +37,52 @@ function AddColumn(columns, key, text)
     )
 }
 
-function SetColumns(columns)
+function SetColumns(columns, questions)
 {
     AddColumn(columns, "ФИО", "coll_fullname");
-    AddColumn(columns, "Руководитель", "coll_fullname");
-    AddColumn(columns, "Должность", "coll_fullname");
-    AddColumn(columns, "Подразделение", "coll_subdivision"),
-    AddColumn(columns, "Организация", "coll_org"),
-    AddColumn(columns, "Опрос", "poll_name")
+    AddColumn(columns, "Должность", "coll_position");
+    AddColumn(columns, "Подразделение", "coll_subdivision");
+    AddColumn(columns, "Организация", "coll_org");
+    AddColumn(columns, "Опрос", "poll_name");
+
+    for (_q in questions)
+    {
+        AddColumn(columns, _q.title, "question" + _q.id);
+    }
+}
+
+function SetRows(rows, poll_results, poll_info)
+{
+    for (_res in poll_results)
+    {
+        _res_te = OpenDoc(UrlFromDocID(Int(_res.id))).TopElem;
+
+        _person = ArrayOptFirstElem(XQuery("for $c in collaborators where id=" + _res_te.person_id.Value + " return $c"), null);
+
+
+        if (_person == null)
+        {
+            continue;
+        }
+
+        _row =
+            {
+                coll_fullname: _person.fullname.Value,
+                coll_position: _person.position_name.Value,
+                coll_subdivision: _person.position_parent_name.Value,
+                coll_org: _person.org_name.Value,
+                poll_name: poll_info.name
+                
+            };
+
+        for (_q in _res_te.questions)
+        {
+            _row["question"+_q.id] = "test";
+        }
+
+
+        rows.push(_row);
+    }
 }
 
 function GetPollResults(coll_id, poll_id)
@@ -56,6 +96,25 @@ function GetPollResults(coll_id, poll_id)
     return ArrayDirect(XQuery("sql: " + _sql));
 }
 
+function ParseQuestionAnswers (question)
+{
+    _answers = [];
+
+    if (!question.HasChild("entries")) return _answers;
+
+    for (_a in question.entries)
+    {
+        _answers.push =
+            {
+                id: _a.id.Value,
+                value: _a.value.Value,
+                weight: (_a.HasChild("weight") ? _a.weight.Value : 0)
+            };
+    }
+
+    return _answers;
+}
+
 function GetPollInfo(poll_id)
 {
     var _poll_te = OpenDoc(UrlFromDocID(Int(poll_id))).TopElem;
@@ -64,10 +123,13 @@ function GetPollInfo(poll_id)
 
     for (_q in _poll_te.questions)
     {
+        _answers = {}
+
+        
+
         _questions.push({
             id: _q.id.Value,
             type: _q.type.Value,
-            weight: _q.weight.Value,
             title: _q.title.Value
         })
     }
@@ -82,15 +144,29 @@ try
 {
     var _params = ParseQueryParams();
 
-    var _poll_res = GetPollResults(_params.coll_id, _params.poll_id);
+    var _poll_info = GetPollInfo(_params.poll_id)
 
     var _report_columns = [];
-    SetColumns(_report_columns);
-
     var _report_rows = [];
 
+    SetColumns(_report_columns, _poll_info.questions);
+
+
+    var _poll_res = GetPollResults(_params.coll_id, _params.poll_id);
+
+    SetRows(_report_rows, _poll_res, _poll_info);
+
+    SendResponse(
+        true,
+        "Отчет успешно сформирован",
+        {
+            columns: _report_columns,
+            rows: _report_rows
+        }
+    )
 }
 catch (err)
 {
-
+    Log(String(err));
+    SendResponse(false, err.message, {err: String(err)});
 }

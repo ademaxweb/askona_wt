@@ -19,6 +19,8 @@
             <button class="button btn-primary p-l">Экспорт в Excel</button>
         </div>
 
+        {{table.rows}}
+
         <v-table :columns="(table.columns)" :rows="(table.rows)"></v-table>
 
         <v-modal v-if="userModal.is_open.value" @close="userModal.close">
@@ -63,95 +65,37 @@
             </div>
         </v-modal>
     </div>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- <script src="./vue.js"></script> -->
     <script src="./composables.js"></script>
+    <script src="./api.js"></script>
     <script src="./VTable.js"></script>
     <script src="./VModal.js"></script>
     <script>
         const {createApp} = Vue;
-
+        
         const app = createApp({
             setup() {
+
+                Vue.onMounted(async () => {
+
+                    try {
+                        const api = useAPI()
+                        const resp = await api.send("http://localhost/custom_web_template.html?object_code=askona_poll_report&poll_id=5304059022436276480&coll_id=1105387902724063519")
+                        table.value.columns = resp.data.columns
+                        for (const r of resp.data.rows) {
+                            table.value.rows.push(r)
+                        }
+
+                        console.log(table)
+                    } catch (e) {
+                        console.log("Error", e)
+                    }
+                })
+
                 const table = Vue.ref({
-                    columns: [
-                        {value: "Сотрудник", key: "col_name"},
-                        {value: "Подразделение", key: "col_sub"},
-                        {value: "Опрос", key: "poll_name"},
-                        {value: "Вопрос 1", key: "poll_q1"},
-                        {value: "Вопрос 2", key: "poll_q2"},
-                        {value: "Вопрос 3", key: "poll_q3"},
-                        {value: "Вопрос 4", key: "poll_q4"},
-                        {value: "Вопрос 5", key: "poll_q5"},
-                        {value: "Вопрос 6", key: "poll_q6"},
-                    ],
-                    rows: [
-                        {
-                            col_name: "Комаровский Алексей Григорьевич1",
-                            col_sub: "Отдел дистанционного обучения",
-                            poll_name: "Опрос по ценностям",
-                            poll_q1: "Правильно",
-                            poll_q2: "Правильно",
-                            poll_q3: "Правильно",
-                            poll_q4: "Правильно",
-                            poll_q5: "Правильно",
-                            poll_q6: "Неправильно",
-                        },
-                        {
-                            col_name: "Комаровский Алексей Григорьевич2",
-                            col_sub: "Отдел дистанционного обучения",
-                            poll_name: "Опрос по ценностям",
-                            poll_q1: "Правильно",
-                            poll_q2: "Неправильно",
-                            poll_q3: "Правильно",
-                            poll_q4: "Правильно",
-                            poll_q5: "Правильно",
-                            poll_q6: "Неправильно",
-                        },
-                        {
-                            col_name: "Комаровский Алексей Григорьевич3",
-                            col_sub: "Отдел дистанционного обучения",
-                            poll_name: "Опрос по ценностям",
-                            poll_q1: "Правильно",
-                            poll_q2: "Неправильно",
-                            poll_q3: "Правильно",
-                            poll_q4: "Правильно",
-                            poll_q5: "Правильно",
-                            poll_q6: "Неправильно",
-                        },
-                        {
-                            col_name: "Комаровский Алексей Григорьевич4",
-                            col_sub: "Отдел дистанционного обучения",
-                            poll_name: "Опрос по ценностям",
-                            poll_q1: "Правильно",
-                            poll_q2: "Правильно",
-                            poll_q3: "Правильно",
-                            poll_q4: "Правильно",
-                            poll_q5: "Правильно",
-                            poll_q6: "Неправильно",
-                        },
-                        {
-                            col_name: "Комаровский Алексей Григорьевич5",
-                            col_sub: "Отдел дистанционного обучения",
-                            poll_name: "Опрос по ценностям",
-                            poll_q1: "Правильно",
-                            poll_q2: "Правильно",
-                            poll_q3: "Правильно",
-                            poll_q4: "Правильно",
-                            poll_q5: "Правильно",
-                            poll_q6: "Неправильно",
-                        },
-                        {
-                            col_name: "Комаровский Алексей Григорьевич6",
-                            col_sub: "Отдел дистанционного обучения",
-                            poll_name: "Опрос по ценностям",
-                            poll_q1: "Правильно",
-                            poll_q2: "Правильно",
-                            poll_q3: "Правильно",
-                            poll_q4: "Правильно",
-                            poll_q5: "Правильно",
-                            poll_q6: "Неправильно",
-                        },
-                    ]
+                    columns: [],
+                    rows: []
                 })
 
                 const userSelection = useSingleSelection({
