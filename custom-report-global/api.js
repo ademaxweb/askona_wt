@@ -1,19 +1,25 @@
-const useAPI = () => {
-    const send = async (url, method = "GET", data = {}, params) => {
+const buildCollectionParams = (params) => {
+    return Object.entries(params).map(([key, value]) => `${key}=${value}`).join(';')
+}
+
+const useApi = () => {
+
+    const send = async (url, method = "GET", data = {}, params = {}) => {
         
         const query_params = {
             method,
-            ...params
+            ...params,
         }
 
         switch (method) {
             case "GET":
-                url += new URLSearchParams(data)
+                url += `?${new URLSearchParams(data)}`
                 break
             
             default:
-                query_params["body"] = JSON.stringify(data)
-                query_params["headers"]["content_type"] = "application/json"
+                query_params.body = new URLSearchParams(data)
+                // query_params.headers = query_params.headers || {}
+                // query_params.headers["Content-Type"] = "application/json"
         }
 
         const response = await fetch(url, query_params)
@@ -23,5 +29,62 @@ const useAPI = () => {
         return await response.json()
     }
 
-    return {send}
+    const reports = useApiReports({send})
+    const search = useApiSearch({send})
+
+    return {send, reports, search}
+}
+
+const useApiSearch = (api) => {
+    
+
+    const search = async ({catalog, field, text}) => {
+        return api.send(
+            '/pp/Ext5/extjs_json_collection_data.html',
+            "POST",
+            {
+                collection_code: "askona_search_object",
+                parameters: buildCollectionParams({
+                    catalog,
+                    search_field: field,
+                    search_str: text
+                })
+            }
+        )
+    }
+
+    const collaborators = async (name) => {
+        return search({
+            catalog: "collaborators",
+            field: "fullname",
+            text: name
+        })
+    }
+
+    const polls = async (name) => {
+        return search({
+            catalog: "polls",
+            field: "name",
+            text: name
+        })
+    }
+
+    return {search, collaborators, polls}
+}
+
+
+const useApiReports = (api) => {
+    const polls = async ({poll_id, coll_id}) => {
+        return api.send(
+            '/custom_web_template.html',
+            "GET",
+            {
+                object_code: "askona_polls_report_handler",
+                poll_id,
+                coll_id
+            }
+        )
+    }
+
+    return {polls}
 }

@@ -4,4 +4,4 @@ var _sql =
     FROM dbo." + catalog + " \
     WHERE " + search_field + " LIKE '%" + search_str + "%'";
 
-var RESULT = XQuery("sql: " + _sql);
+var RESULT = ArrayDirect(XQuery("sql: " + _sql));

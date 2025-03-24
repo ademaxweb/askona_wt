@@ -14,12 +14,10 @@
         </div>
 
         <div class="container py-l">
-            <button class="button btn-primary p-l">Очистить</button>
-            <button class="button btn-primary p-l">Построить отчет</button>
-            <button class="button btn-primary p-l">Экспорт в Excel</button>
+            <button class="button btn-primary p-l" @click="clearAll">Очистить</button>
+            <button class="button btn-primary p-l" @click="buildReport">Построить отчет</button>
+            <!-- <button class="button btn-primary p-l">Экспорт в Excel</button> -->
         </div>
-
-        {{table.rows}}
 
         <v-table :columns="(table.columns)" :rows="(table.rows)"></v-table>
 
@@ -39,7 +37,7 @@
             <div class="list cols-2 w-full">
                 <div class="list__item item-bordered pointer" v-for="col in userSearch.searched.value" @click="onClickListItem('coll', col)">
                     <p>{{ col.fullname }}</p>
-                    <p class="text-secondary">{{col.subdivision}}</p>
+                    <p class="text-secondary">{{col.position_parent_name}}</p>
                 </div>
             </div>
         </v-modal>
@@ -77,23 +75,9 @@
         const app = createApp({
             setup() {
 
-                Vue.onMounted(async () => {
+                const api = useApi()
 
-                    try {
-                        const api = useAPI()
-                        const resp = await api.send("http://localhost/custom_web_template.html?object_code=askona_poll_report&poll_id=5304059022436276480&coll_id=1105387902724063519")
-                        table.value.columns = resp.data.columns
-                        for (const r of resp.data.rows) {
-                            table.value.rows.push(r)
-                        }
-
-                        console.log(table)
-                    } catch (e) {
-                        console.log("Error", e)
-                    }
-                })
-
-                const table = Vue.ref({
+                const table = Vue.reactive({
                     columns: [],
                     rows: []
                 })
@@ -111,15 +95,23 @@
                 const userModal = useModal()
                 const pollModal = useModal()
 
-                const userSearch = useSearch(async () => [
-                    {id: 1, fullname: "Комаровский Алексей Григорьевич1", subdivision: "Отдел дист. обучения"},
-                    {id: 2, fullname: "Комаровский Алексей Григорьевич2", subdivision: "Отдел дист. обучения"},
-                    {id: 3, fullname: "Комаровский Алексей Григорьевич3", subdivision: "Отдел дист. обучения"},
-                ])
-                const pollSearch = useSearch(async () => [
-                    {id: 1, name: "Опрос по ценностям"},
-                    {id: 2, name: "Другой опрос"}
-                ])
+                const userSearch = useSearch(async () => {
+                    try {
+                        const resp = await api.search.collaborators(userSearch.search_str.value)
+                        return resp.results
+                    } catch (e) {
+                        return []
+                    }
+                })
+                const pollSearch = useSearch(async () => {
+                    try {
+                        const resp = await api.search.polls(pollSearch.search_str.value)
+                        return resp.results
+                    } catch(e) {
+                        console.log(e)
+                        return []
+                    }
+                })
 
                 const onClickListItem = (type, selected) => {
                     switch (type) {
@@ -134,7 +126,35 @@
                             break
                     }
                 }
-            
+                
+                const buildReport = async () => {
+                    if (!userSelection.is_selected.value || !pollSelection.is_selected.value) return;
+
+                    try {
+                        const resp = await api.reports.polls({
+                            poll_id: pollSelection.selected.value.id,
+                            coll_id: userSelection.selected.value.id
+                        })
+
+                        table.columns = resp.data.columns
+                        table.rows = resp.data.rows
+                        
+                    } catch (e) {
+                        console.log(e)
+                        table.columns = []
+                        table.rows = []
+                    }
+                }
+
+                const clearAll = () => {
+                    userSearch.clear()
+                    pollSearch.clear()
+                    userSelection.clear()
+                    pollSelection.clear()
+                    table.columns = []
+                    table.rows = []
+                }
+
                 return {
                     table,
                     userSelection,
@@ -143,7 +163,9 @@
                     pollModal,
                     userSearch,
                     pollSearch,
-                    onClickListItem
+                    onClickListItem,
+                    buildReport,
+                    clearAll
                 }
             }
         })

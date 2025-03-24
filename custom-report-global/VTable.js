@@ -11,7 +11,7 @@ const VTable = {
     },
 
     setup(props) {
-        const {set_key, sorted: sorted_rows} = useSorter(props.rows)
+        const {set_key, sorted: sorted_rows} = useSorter(Vue.toRef(props, "rows"))
 
         return {
             set_key,

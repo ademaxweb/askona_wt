@@ -44,6 +44,7 @@ function SetColumns(columns, questions)
     AddColumn(columns, "Подразделение", "coll_subdivision");
     AddColumn(columns, "Организация", "coll_org");
     AddColumn(columns, "Опрос", "poll_name");
+    AddColumn(columns, "Дата прохождения", "poll_date")
 
     for (_q in questions)
     {
@@ -71,7 +72,8 @@ function SetRows(rows, poll_results, poll_info)
                 coll_position: _person.position_name.Value,
                 coll_subdivision: _person.position_parent_name.Value,
                 coll_org: _person.org_name.Value,
-                poll_name: poll_info.name
+                poll_name: poll_info.name,
+                poll_date: StrDate(_res.create_date.Value)
                 
             };
 
@@ -80,12 +82,11 @@ function SetRows(rows, poll_results, poll_info)
         for (_q in poll_info.questions)
         {
             // Ответ на вопрос в карточке результ
-            _question_answer = ArrayOptFirstElem(ArraySelectByKey(_res_te.questions, _q.id.Value, "id"), null);
+            _question_answer = ArrayOptFirstElem(ArraySelectByKey(_res_te.questions, _q.id, "id"), null);
             
 
             // Будет записано в отчет
             _answer = "-"
-
 
             // Если есть ответ пользователя на текущий вопрос
             if (_question_answer != null)
@@ -94,8 +95,14 @@ function SetRows(rows, poll_results, poll_info)
                 {
                     case "choice":
                         // Получаем выбранный вариант ответа
-                        _answer_option = ArrayOptFirstElem(ArraySelectByKey(_q.answers, _question_answer.value.Value, "id"), null)
-                        _answer = _answer_option != null ? _answer_option.value
+                        _answer_option = ArrayOptFirstElem(ArraySelectByKey(_q.answers, Int(_question_answer.value.Value), "id"), null)
+                        
+
+                        if (_answer_option != null)
+                        {
+                            _answer = _answer_option.value + (_q.commentable && _question_answer.ChildExists('comment') && (_question_answer.comment.Value != "") ? " (" + _question_answer.comment.Value + ")" : "");
+                        }
+                        
                         break;
 
                     case "text":
@@ -104,7 +111,7 @@ function SetRows(rows, poll_results, poll_info)
                 }           
             }
 
-            row["question"+_q.id.Value] = _answer;
+            _row["question"+_q.id] = _answer;
         }
 
 
@@ -126,17 +133,17 @@ function GetPollResults(coll_id, poll_id)
 function ParseQuestionAnswers (question)
 {
     _answers = [];
-
-    if (!question.HasChild("entries")) return _answers;
+    if (!question.ChildExists("entries")) return _answers;
 
     for (_a in question.entries)
     {
-        _answers.push =
+        _answers.push(
             {
                 id: _a.id.Value,
                 value: _a.value.Value,
-                weight: (_a.HasChild("weight") ? _a.weight.Value : 0)
-            };
+                weight: (_a.ChildExists("weight") && (_a.weight.Value != null) ? _a.weight.Value : 0)
+            }
+        );
     }
 
     return _answers;
@@ -155,7 +162,7 @@ function GetPollInfo(poll_id)
             type: _q.type.Value,
             title: _q.title.Value,
             answers: ParseQuestionAnswers(_q),
-            commentable: Boolean(_q.add_comment.Value)
+            commentable: _q.add_comment.Value
         })
     }
     

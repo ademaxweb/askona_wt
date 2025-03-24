@@ -13,7 +13,7 @@ const useSorter = data => {
 
     const sorted = Vue.computed(() => {
 
-        const arr = data
+        const arr = Vue.unref(data)
 
         if (sort_key.value == null || !arr.length || !(sort_key.value in arr[0])) {
             return [...arr];
