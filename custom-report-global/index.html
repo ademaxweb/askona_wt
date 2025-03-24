@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <div class="container py-l grid cols-2">
+            <button class="button p-l" @click="userModal.open">{{userSelection.selected_text}}</button>
+            <button class="button p-l" @click="pollModal.open">{{pollSelection.selected_text}}</button>
+        </div>
+
+        <div class="container py-l">
+            <button class="button btn-primary p-l">Очистить</button>
+            <button class="button btn-primary p-l">Построить отчет</button>
+            <button class="button btn-primary p-l">Экспорт в Excel</button>
+        </div>
+
+        <v-table :columns="(table.columns)" :rows="(table.rows)"></v-table>
+
+        <v-modal v-if="userModal.is_open.value" @close="userModal.close">
+            <h2>Выбрать сотрудника</h2>
+
+            <input
+                class="input py-xl px-l w-full"
+                type="text"
+                placeholder="ФИО сотрудника"
+                v-model.trim="userSearch.search_str.value"
+                @keyup.enter="userSearch.search"
+            >
+
+            <p class="w-full text-center" v-if="!userSearch.has_searched.value">Пока ничего не найдено. Нажмите Enter для поиска.</p>
+
+            <div class="list cols-2 w-full">
+                <div class="list__item item-bordered pointer" v-for="col in userSearch.searched.value" @click="onClickListItem('coll', col)">
+                    <p>{{ col.fullname }}</p>
+                    <p class="text-secondary">{{col.subdivision}}</p>
+                </div>
+            </div>
+        </v-modal>
+      
+      
+        <v-modal v-if="pollModal.is_open.value" @close="pollModal.close">
+            <h2>Выбрать опрос</h2>
+
+            <input
+                class="input py-xl px-l w-full"
+                type="text"
+                placeholder="Название опроса"
+                v-model.trim="pollSearch.search_str.value"
+                @keyup.enter="pollSearch.search"
+            >
+
+            <p class="w-full text-center" v-if="!pollSearch.has_searched.value">Пока ничего не найдено. Нажмите Enter для поиска.</p>
+          
+            <div class="list cols-2 w-full">
+                <div class="list__item item-bordered pointer" v-for="p in pollSearch.searched.value" @click="onClickListItem('poll', p)">
+                    <p>{{ p.name }}</p>
+                </div>
+            </div>
+        </v-modal>
+    </div>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="./composables.js"></script>
+    <script src="./VTable.js"></script>
+    <script src="./VModal.js"></script>
+    <script>
+        const {createApp} = Vue;
+
+        const app = createApp({
+            setup() {
+                const table = Vue.ref({
+                    columns: [
+                        {value: "Сотрудник", key: "col_name"},
+                        {value: "Подразделение", key: "col_sub"},
+                        {value: "Опрос", key: "poll_name"},
+                        {value: "Вопрос 1", key: "poll_q1"},
+                        {value: "Вопрос 2", key: "poll_q2"},
+                        {value: "Вопрос 3", key: "poll_q3"},
+                        {value: "Вопрос 4", key: "poll_q4"},
+                        {value: "Вопрос 5", key: "poll_q5"},
+                        {value: "Вопрос 6", key: "poll_q6"},
+                    ],
+                    rows: [
+                        {
+                            col_name: "Комаровский Алексей Григорьевич1",
+                            col_sub: "Отдел дистанционного обучения",
+                            poll_name: "Опрос по ценностям",
+                            poll_q1: "Правильно",
+                            poll_q2: "Правильно",
+                            poll_q3: "Правильно",
+                            poll_q4: "Правильно",
+                            poll_q5: "Правильно",
+                            poll_q6: "Неправильно",
+                        },
+                        {
+                            col_name: "Комаровский Алексей Григорьевич2",
+                            col_sub: "Отдел дистанционного обучения",
+                            poll_name: "Опрос по ценностям",
+                            poll_q1: "Правильно",
+                            poll_q2: "Неправильно",
+                            poll_q3: "Правильно",
+                            poll_q4: "Правильно",
+                            poll_q5: "Правильно",
+                            poll_q6: "Неправильно",
+                        },
+                        {
+                            col_name: "Комаровский Алексей Григорьевич3",
+                            col_sub: "Отдел дистанционного обучения",
+                            poll_name: "Опрос по ценностям",
+                            poll_q1: "Правильно",
+                            poll_q2: "Неправильно",
+                            poll_q3: "Правильно",
+                            poll_q4: "Правильно",
+                            poll_q5: "Правильно",
+                            poll_q6: "Неправильно",
+                        },
+                        {
+                            col_name: "Комаровский Алексей Григорьевич4",
+                            col_sub: "Отдел дистанционного обучения",
+                            poll_name: "Опрос по ценностям",
+                            poll_q1: "Правильно",
+                            poll_q2: "Правильно",
+                            poll_q3: "Правильно",
+                            poll_q4: "Правильно",
+                            poll_q5: "Правильно",
+                            poll_q6: "Неправильно",
+                        },
+                        {
+                            col_name: "Комаровский Алексей Григорьевич5",
+                            col_sub: "Отдел дистанционного обучения",
+                            poll_name: "Опрос по ценностям",
+                            poll_q1: "Правильно",
+                            poll_q2: "Правильно",
+                            poll_q3: "Правильно",
+                            poll_q4: "Правильно",
+                            poll_q5: "Правильно",
+                            poll_q6: "Неправильно",
+                        },
+                        {
+                            col_name: "Комаровский Алексей Григорьевич6",
+                            col_sub: "Отдел дистанционного обучения",
+                            poll_name: "Опрос по ценностям",
+                            poll_q1: "Правильно",
+                            poll_q2: "Правильно",
+                            poll_q3: "Правильно",
+                            poll_q4: "Правильно",
+                            poll_q5: "Правильно",
+                            poll_q6: "Неправильно",
+                        },
+                    ]
+                })
+
+                const userSelection = useSingleSelection({
+                    placeholder: "Выбрать сотрудника",
+                    display_key: "fullname"
+                })
+
+                const pollSelection = useSingleSelection({
+                    placeholder: "Выбрать опрос",
+                    display_key: "name"
+                })
+
+                const userModal = useModal()
+                const pollModal = useModal()
+
+                const userSearch = useSearch(async () => [
+                    {id: 1, fullname: "Комаровский Алексей Григорьевич1", subdivision: "Отдел дист. обучения"},
+                    {id: 2, fullname: "Комаровский Алексей Григорьевич2", subdivision: "Отдел дист. обучения"},
+                    {id: 3, fullname: "Комаровский Алексей Григорьевич3", subdivision: "Отдел дист. обучения"},
+                ])
+                const pollSearch = useSearch(async () => [
+                    {id: 1, name: "Опрос по ценностям"},
+                    {id: 2, name: "Другой опрос"}
+                ])
+
+                const onClickListItem = (type, selected) => {
+                    switch (type) {
+                        case "poll":
+                            pollModal.close()
+                            pollSelection.select(selected)
+                            break
+
+                        case "coll":
+                            userModal.close()
+                            userSelection.select(selected)
+                            break
+                    }
+                }
+            
+                return {
+                    table,
+                    userSelection,
+                    pollSelection,
+                    userModal,
+                    pollModal,
+                    userSearch,
+                    pollSearch,
+                    onClickListItem
+                }
+            }
+        })
+
+        app.component('VTable', VTable)
+        app.component('VModal', VModal)
+        app.mount("#app")
+    </script>
+</body>
+</html>
