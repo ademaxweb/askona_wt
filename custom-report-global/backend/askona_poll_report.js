@@ -75,9 +75,36 @@ function SetRows(rows, poll_results, poll_info)
                 
             };
 
-        for (_q in _res_te.questions)
+
+        // Цикл по вопросам в карточке опроса
+        for (_q in poll_info.questions)
         {
-            _row["question"+_q.id] = "test";
+            // Ответ на вопрос в карточке результ
+            _question_answer = ArrayOptFirstElem(ArraySelectByKey(_res_te.questions, _q.id.Value, "id"), null);
+            
+
+            // Будет записано в отчет
+            _answer = "-"
+
+
+            // Если есть ответ пользователя на текущий вопрос
+            if (_question_answer != null)
+            {
+                switch (_q.type)
+                {
+                    case "choice":
+                        // Получаем выбранный вариант ответа
+                        _answer_option = ArrayOptFirstElem(ArraySelectByKey(_q.answers, _question_answer.value.Value, "id"), null)
+                        _answer = _answer_option != null ? _answer_option.value
+                        break;
+
+                    case "text":
+                        _answer = _question_answer.value.Value;
+                        break;
+                }           
+            }
+
+            row["question"+_q.id.Value] = _answer;
         }
 
 
@@ -123,14 +150,12 @@ function GetPollInfo(poll_id)
 
     for (_q in _poll_te.questions)
     {
-        _answers = {}
-
-        
-
         _questions.push({
             id: _q.id.Value,
             type: _q.type.Value,
-            title: _q.title.Value
+            title: _q.title.Value,
+            answers: ParseQuestionAnswers(_q),
+            commentable: Boolean(_q.add_comment.Value)
         })
     }
     
@@ -145,15 +170,12 @@ try
     var _params = ParseQueryParams();
 
     var _poll_info = GetPollInfo(_params.poll_id)
+    var _poll_res = GetPollResults(_params.coll_id, _params.poll_id);
 
     var _report_columns = [];
     var _report_rows = [];
 
     SetColumns(_report_columns, _poll_info.questions);
-
-
-    var _poll_res = GetPollResults(_params.coll_id, _params.poll_id);
-
     SetRows(_report_rows, _poll_res, _poll_info);
 
     SendResponse(
