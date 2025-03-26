@@ -11,9 +11,11 @@ const useApi = () => {
             ...params,
         }
 
+        
+
         switch (method) {
             case "GET":
-                url += `?${new URLSearchParams(data)}`
+                url += `?${new URLSearchParams(JSON.parse(JSON.stringify(data)))}`
                 break
             
             default:
