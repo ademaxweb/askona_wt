@@ -1,0 +1,400 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Отчет</title>
+    <link rel="stylesheet" href="main.css">
+    <style>
+        * {
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            background: #eaeaea;
+        }
+
+        #app {
+            width: 100vw;
+        }
+        .report_params {
+            display: flex;
+            flex-direction: column;
+            gap: 1em;
+
+            width: 60%;
+            margin: 50px auto;
+            padding: 50px;
+
+            background: #fff;
+            border-radius: 15px;
+
+            -webkit-box-shadow: 0 3px 19px 0 rgba(15, 102, 105, 0.1);
+            -moz-box-shadow: 0 3px 19px 0 rgba(15, 102, 105, 0.1);
+            box-shadow: 0 3px 19px 0 rgba(15, 102, 105, 0.1);
+        }
+
+        .report_params__row {
+            display: flex;
+            width: 100%;
+            gap: 1em;
+        }
+
+        .report_params__buttons {
+            display: flex;
+            align-items: center;
+            gap: 1em;
+            margin-top: 1.5em;
+        }
+
+        .report_table {
+            width: 60%;
+            max-width: 60%;
+            max-height: 500px;
+            margin: 0 auto;
+            overflow: auto;
+            border-radius: 15px;
+        }
+        
+        
+        .report_table table {
+            text-align: center;
+            background: #fff;
+            border-radius: 15px;
+            min-width: 100%;
+            border-spacing: 0;
+            overflow: hidden;
+            table-layout: auto;
+        }
+        
+        .report_table thead {
+            background: #00b9bf;
+            color: #ffffff;
+        }
+
+        .report_table th {
+            padding: 0.75em 0;
+        }
+
+        .report_table tbody tr:nth-child(even) {
+            background-color: #f0f0f0;
+        }
+
+        .report_table td {
+            padding: 0.5em;
+            min-width: 200px;
+            //white-space: nowrap;
+        }
+
+        .modal_wrap {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 9999;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal_body {
+            display: flex;
+            flex-direction: column;
+            border-radius: 1.5em;
+            padding: 2em 100px;
+            background: #fff;
+            width: 900px;
+            gap: 1em;
+        }
+
+        .modal_input {
+            padding: 1.5em 1em !important;
+            outline: none !important;
+            border: none !important;
+            background-color: #eaeaea !important;
+            border-radius: 0.3rem !important;
+        }
+
+        .search_list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5em;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .search_list__item {
+            border: 1px solid #00b9bf;
+            border-radius: 0.3em;
+            padding: 1em;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .search_list__item__info {
+            color: #9a9a9a
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="report_params">
+            <div class="report_params__row">
+                <button @click="coll_selection.showModal" class="a-btn btn-minor btn-full">{{ coll_selection.buttonLabel }}</button>
+            </div>
+            <div class="report_params__row">
+                <button @click="procedure_selection.showModal" class="a-btn btn-minor btn-full">{{ procedure_selection.buttonLabel }}</button>
+            </div>
+            <div class="report_params__buttons">
+                <button class="a-btn btn-grey" @click="clearAll">Сбросить</button>
+                <button class="a-btn" @click="report.build(coll_selection.selected.id, procedure_selection.selected.id)">Построить отчет</button>
+                <button class="a-btn" @click="exportToExcel">Экспорт в Excel</button>
+            </div>
+        </div>
+
+        <custom-table class="report_table" :columns :rows></custom-table>
+
+        <div class="modal_wrap" v-if="coll_selection.isShowingModal.value" @click.self="coll_selection.hideModal" @keyup.esc="coll_selection.hideModal">
+            <div class="modal_body">
+                <h2 class="modal_heading">Выбрать сотрудника</h2>
+                <input class="modal_input" type="text" v-model="coll_search_query" placeholder="ФИО сотрудника" @keyup.enter="search_collaborators">
+                <div class="search_list">
+                    <p v-if="!searched_collaborators.length">Здесь пока ничего нет</p>
+                    <div class="search_list__item" v-for="c in searched_collaborators" @click="selectCollaborator(c)">
+                        <span class="search_list__item__name">{{ c.fullname }}</span>
+                        <span class="search_list__item__info">{{c.position_name}}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal_wrap" v-if="procedure_selection.isShowingModal.value" @click.self="procedure_selection.hideModal" @keyup.esc="procedure_selection.hideModal">
+            <div class="modal_body">
+                <h2 class="modal_heading">Выбрать процедуру оценки</h2>
+                <input class="modal_input" type="text" v-model="procedure_search_query" placeholder="Название программы" @keyup.enter="search_procedures">
+                <div class="search_list">
+                    <p v-if="!searched_procedures.length">Здесь пока ничего нет</p>
+                    <div class="search_list__item" v-for="p in searched_procedures" @click="selectProcedure(p)">
+                        <span class="search_list__item__name">{{ p.name }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+
+
+    <script>
+        const {createApp, ref, reactive, computed} = Vue
+
+        const useSelection = (dft_button_label = "Выбрать") => {
+            const selected = reactive({id: null, name: null})
+
+            const isSelected = computed(()=>!!selected.id)
+            const buttonLabel = computed(() => isSelected.value ? selected.name : dft_button_label)
+
+            const isShowingModal = ref(false)
+
+            const showModal = () => {
+                isShowingModal.value = true
+            }
+
+            const hideModal = () => {
+                isShowingModal.value = false
+            }
+
+            const select = (id, name) => {
+                selected.id = id
+                selected.name = name
+            }
+
+
+
+            return {
+                selected,
+                isSelected,
+                isShowingModal,
+                buttonLabel,
+                showModal,
+                hideModal,
+                select
+            }
+        }
+
+        const useReport = () => {
+            const columns = ref([])
+            const rows = ref([])
+
+            const build = async (col_id, procedure_id) => {
+
+                const response = await fetch(`custom_web_template.html?object_code=askona_assessment_report_handler&appr_id=${procedure_id}&person_id=${col_id}`)
+
+                if (!response.ok) return clear()
+
+                const data = await response.json()
+
+                if (!data.success) return clear()
+
+                columns.value = data.data.columns
+                rows.value = data.data.rows
+
+
+                console.log(columns.value, rows.value)
+            }
+
+            const clear = () => {
+                columns.value = []
+                rows.value = []
+            }
+
+
+            return {
+                columns,
+                rows,
+                build,
+                clear
+            }
+
+        }
+
+
+        const customTable = {
+            props: {
+                columns: {
+                    type: Array,
+                    required: true,
+                },
+                rows: {
+                    type: Array,
+                    required: true,
+                }
+            },
+            template: `
+              <div>
+                <table id="report_table">
+                  <thead>
+                    <tr>
+                      <th v-for="col in columns">{{ col.label }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="item in rows">
+                      <td v-for="col in columns">{{ item[col.name] }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            `
+        }
+
+        const app = createApp({
+
+            components: {customTable},
+            setup() {
+                const coll_selection = useSelection("Выбрать сотрудника")
+                const procedure_selection = useSelection("Выбрать процедуру")
+
+
+                const coll_search_query = ref("")
+                const procedure_search_query = ref("")
+
+                const searched_collaborators = ref([])
+                const search_collaborators = async () => {
+
+
+                    const response = await fetch("/pp/Ext5/extjs_json_collection_data.html", {
+                        method: "POST",
+                        body: new URLSearchParams({
+                            collection_code: "askona_search_collaborators",
+                            parameters: `q=${coll_search_query.value}`
+                        })
+                    })
+
+                    if (!response.ok) {
+                        return
+                    }
+
+                    const data = await response.json()
+                    console.log(data)
+                    searched_collaborators.value = data.results
+
+                }
+                const selectCollaborator = (col) => {
+                    coll_selection.select(col.id, col.fullname)
+                    coll_selection.hideModal()
+                }
+
+                const searched_procedures = ref([])
+                const search_procedures = async () => {
+
+
+                    const response = await fetch("/pp/Ext5/extjs_json_collection_data.html", {
+                        method: "POST",
+                        body: new URLSearchParams({
+                            collection_code: "askona_search_assessment_appraises",
+                            parameters: `q=${procedure_search_query.value}`
+                        })
+                    })
+
+                    if (!response.ok) {
+                        return
+                    }
+
+                    const data = await response.json()
+                    console.log(data)
+                    searched_procedures.value = data.results
+
+                }
+                const selectProcedure = (p) => {
+                    procedure_selection.select(p.id, p.name)
+                    procedure_selection.hideModal()
+                }
+
+                const {columns, rows, ...report} = useReport()
+
+                const exportToExcel = () => {
+                    var wb = XLSX.utils.table_to_book(document.getElementById("report_table"));
+                    /* Export to file (start a download) */
+                    XLSX.writeFile(wb, "report.xlsx", {raw: true});
+                }
+
+                const clearAll = () => {
+                    report.clear()
+                    coll_search_query.value = ""
+                    procedure_search_query.value = ""
+                    searched_collaborators.value = []
+                    searched_procedures.value = []
+                    coll_selection.select(null, null)
+                    procedure_selection.select(null, null)
+                }
+
+                return {
+                    coll_selection,
+                    procedure_selection,
+                    coll_search_query,
+                    procedure_search_query,
+                    search_collaborators,
+                    searched_collaborators,
+                    selectCollaborator,
+                    search_procedures,
+                    searched_procedures,
+                    selectProcedure,
+                    clearAll,
+                    report,
+                    rows,
+                    columns,
+                    exportToExcel
+                }
+            }
+        })
+
+        app.mount("#app")
+    </script>
+</body>
+</html>

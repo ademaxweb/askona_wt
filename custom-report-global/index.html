@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+
+        <div class="container">
+            <h1>Отчёт по опросам</h1>
+        </div>
+
+        <div class="container py-l grid cols-2">
+            <button class="button p-l" @click="userModal.open">{{userSelection.selected_text}}</button>
+            <button class="button p-l" @click="pollModal.open">{{pollSelection.selected_text}}</button>
+        </div>
+
+        <div class="container py-l">
+            <button class="button btn-primary p-l" @click="clearAll">Очистить</button>
+            <button class="button btn-primary p-l" @click="buildReport">Построить отчет</button>
+            <button class="button btn-primary p-l" @click="exportToExcel">Экспорт в Excel</button>
+        </div>
+
+        <v-table :columns="(table.columns)" :rows="(table.rows)" table-id="report_table"></v-table>
+
+        <v-modal v-if="userModal.is_open.value" @close="userModal.close">
+            <h2>Выбрать сотрудника</h2>
+
+            <input
+                class="input py-xl px-l w-full"
+                type="text"
+                placeholder="ФИО сотрудника"
+                v-model.trim="userSearch.search_str.value"
+                @keyup.enter="userSearch.search"
+            >
+
+            <p class="w-full text-center" v-if="!userSearch.has_searched.value">Пока ничего не найдено. Нажмите Enter для поиска.</p>
+
+            <div class="list cols-2 w-full">
+                <div class="list__item item-bordered pointer" v-for="col in userSearch.searched.value" @click="onClickListItem('coll', col)">
+                    <p>{{ col.fullname }}</p>
+                    <p class="text-secondary">{{col.position_parent_name}}</p>
+                </div>
+            </div>
+        </v-modal>
+      
+      
+        <v-modal v-if="pollModal.is_open.value" @close="pollModal.close">
+            <h2>Выбрать опрос</h2>
+
+            <input
+                class="input py-xl px-l w-full"
+                type="text"
+                placeholder="Название опроса"
+                v-model.trim="pollSearch.search_str.value"
+                @keyup.enter="pollSearch.search"
+            >
+
+            <p class="w-full text-center" v-if="!pollSearch.has_searched.value">Пока ничего не найдено. Нажмите Enter для поиска.</p>
+          
+            <div class="list cols-2 w-full">
+                <div class="list__item item-bordered pointer" v-for="p in pollSearch.searched.value" @click="onClickListItem('poll', p)">
+                    <p>{{ p.name }}</p>
+                </div>
+            </div>
+        </v-modal>
+    </div>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <!-- <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script> -->
+    <!-- <script src="./vue.js"></script> -->
+    <script src="./composables.js"></script>
+    <script src="./api.js"></script>
+    <script src="./VTable.js"></script>
+    <script src="./VModal.js"></script>
+    <script>
+        const {createApp} = Vue;
+        
+        const app = createApp({
+            setup() {
+
+                const api = useApi()
+
+                const table = Vue.reactive({
+                    columns: [],
+                    rows: []
+                })
+
+                const userSelection = useSingleSelection({
+                    placeholder: "Все сотрудники (нажмите, чтобы выбрать)",
+                    display_key: "fullname"
+                })
+
+                const pollSelection = useSingleSelection({
+                    placeholder: "Выбрать опрос",
+                    display_key: "name"
+                })
+
+                const userModal = useModal()
+                const pollModal = useModal()
+
+                const userSearch = useSearch(async () => {
+                    try {
+                        const resp = await api.search.collaborators(userSearch.search_str.value)
+                        return resp.results
+                    } catch (e) {
+                        return []
+                    }
+                })
+                const pollSearch = useSearch(async () => {
+                    try {
+                        const resp = await api.search.polls(pollSearch.search_str.value)
+                        return resp.results
+                    } catch(e) {
+                        return []
+                    }
+                })
+
+                const onClickListItem = (type, selected) => {
+                    switch (type) {
+                        case "poll":
+                            pollModal.close()
+                            pollSelection.select(selected)
+                            break
+
+                        case "coll":
+                            userModal.close()
+                            userSelection.select(selected)
+                            break
+                    }
+                }
+                
+                const buildReport = async () => {
+                    if (!pollSelection.is_selected.value) return;
+
+                    try {
+                        const resp = await api.reports.polls({
+                            poll_id: pollSelection.selected.value?.id || undefined,
+                            coll_id: userSelection.selected.value?.id || undefined
+                        })
+
+                        table.columns = resp.data.columns
+                        table.rows = resp.data.rows
+                        
+                    } catch (e) {
+                        console.log(e)
+                        table.columns = []
+                        table.rows = []
+                    }
+                }
+
+                const clearAll = () => {
+                    userSearch.clear()
+                    pollSearch.clear()
+                    userSelection.clear()
+                    pollSelection.clear()
+                    table.columns = []
+                    table.rows = []
+                }
+
+                const exportToExcel = () => {
+                    var wb = XLSX.utils.table_to_book(document.getElementById("report_table"));
+                    const date = new Date();
+                    const formattedDate = date.toLocaleString('ru-RU', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    }).replace(/[.,\s\/]/g, '_').replace(/_+/g, '_');
+
+                    XLSX.writeFile(wb, `report_${formattedDate}.xlsx`, {raw: true});
+                }
+
+                return {
+                    table,
+                    userSelection,
+                    pollSelection,
+                    userModal,
+                    pollModal,
+                    userSearch,
+                    pollSearch,
+                    onClickListItem,
+                    buildReport,
+                    clearAll,
+                    exportToExcel
+                }
+            }
+        })
+
+        app.component('VTable', VTable)
+        app.component('VModal', VModal)
+        app.mount("#app")
+    </script>
+</body>
+</html>
