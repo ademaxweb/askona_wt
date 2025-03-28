@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../../vue/styles.css">
 </head>
 <body>
     <div id="app">
@@ -24,7 +24,7 @@
             <button class="button btn-primary p-l" @click="exportToExcel">Экспорт в Excel</button>
         </div>
 
-        <v-table :columns="(table.columns)" :rows="(table.rows)" table-id="report_table"></v-table>
+        <v-table ref="report_table" :table="table" table-id="report_table" base-file-name="test_report"></v-table>
 
         <v-modal v-if="userModal.is_open.value" @close="userModal.close">
             <h2>Выбрать сотрудника</h2>
@@ -69,12 +69,12 @@
         </v-modal>
     </div>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-    <!-- <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script> -->
-    <!-- <script src="./vue.js"></script> -->
-    <script src="./composables.js"></script>
-    <script src="./api.js"></script>
-    <script src="./VTable.js"></script>
-    <script src="./VModal.js"></script>
+    <!-- <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script> -->
+    <script src="./../../vue/vue.js"></script>
+    <script src="./../../vue/composables.js"></script>
+    <script src="./../../vue/api.js"></script>
+    <script src="./../../vue/components/tables/VTable.js"></script>
+    <script src="./../../vue/components/modals/VModal.js"></script>
     <script>
         const {createApp} = Vue;
         
@@ -87,6 +87,16 @@
                     columns: [],
                     rows: []
                 })
+
+                const report_table = Vue.useTemplateRef('report_table')
+
+                const exportToExcel = () => {
+                    console.log(report_table.value);
+
+                    if (!report_table.value) return;
+
+                    report_table.value.exportToExcel();
+                }
 
                 const userSelection = useSingleSelection({
                     placeholder: "Все сотрудники (нажмите, чтобы выбрать)",
@@ -146,8 +156,6 @@
                         
                     } catch (e) {
                         console.log(e)
-                        table.columns = []
-                        table.rows = []
                     }
                 }
 
@@ -160,20 +168,6 @@
                     table.rows = []
                 }
 
-                const exportToExcel = () => {
-                    var wb = XLSX.utils.table_to_book(document.getElementById("report_table"));
-                    const date = new Date();
-                    const formattedDate = date.toLocaleString('ru-RU', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false
-                    }).replace(/[.,\s\/]/g, '_').replace(/_+/g, '_');
-
-                    XLSX.writeFile(wb, `report_${formattedDate}.xlsx`, {raw: true});
-                }
 
                 return {
                     table,
