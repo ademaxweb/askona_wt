@@ -111,10 +111,10 @@ function SetRows(rows, poll_results, poll_info)
                     _avg = 0;
                     if (_current_block.count > 0)
                     {
-                        _avg = Math.round((_current_block.points / _current_block.count) * 100);
+                        _avg = Real(Math.round((_current_block.points / _current_block.count) * 100)) / 100;
                     }
                     _row["block"+_current_block.id+"_avg"] = _avg;
-                    _row["block"+_current_block.id+"_res"] = 'A'; 
+                    _row["block"+_current_block.id+"_res"] = _avg >= 2.5 ? "A" : _avg >= 2 ? "B" : _avg >= 1 ? "C" : "D";
                 }
 
                 _current_block = {
@@ -167,7 +167,7 @@ function SetRows(rows, poll_results, poll_info)
                 _avg = Real(Math.round((_current_block.points / _current_block.count) * 100)) / 100;
             }
             _row["block"+_current_block.id+"_avg"] = _avg;
-            _row["block"+_current_block.id+"_res"] = 'A'; 
+            _row["block"+_current_block.id+"_res"] = _avg >= 2.5 ? "A" : _avg >= 2 ? "B" : _avg >= 1 ? "C" : "D";
         }
 
         rows.push(_row);

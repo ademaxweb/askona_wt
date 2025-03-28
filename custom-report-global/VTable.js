@@ -7,6 +7,11 @@ const VTable = {
         rows: {
           type: Array,
           required: true
+        },
+        tableId: {
+            type: [String, null],
+            required: false,
+            default: null
         }
     },
 
@@ -21,7 +26,7 @@ const VTable = {
 
     template: `
         <div class="table_wrapper">
-            <table class="table">
+            <table class="table" :id="tableId">
                 <thead>
                     <tr>
                     <th v-for="column in columns" @click="set_key(column.key)">

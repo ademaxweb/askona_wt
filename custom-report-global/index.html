@@ -8,6 +8,11 @@
 </head>
 <body>
     <div id="app">
+
+        <div class="container">
+            <h1>Отчёт по опросам</h1>
+        </div>
+
         <div class="container py-l grid cols-2">
             <button class="button p-l" @click="userModal.open">{{userSelection.selected_text}}</button>
             <button class="button p-l" @click="pollModal.open">{{pollSelection.selected_text}}</button>
@@ -16,10 +21,10 @@
         <div class="container py-l">
             <button class="button btn-primary p-l" @click="clearAll">Очистить</button>
             <button class="button btn-primary p-l" @click="buildReport">Построить отчет</button>
-            <!-- <button class="button btn-primary p-l">Экспорт в Excel</button> -->
+            <button class="button btn-primary p-l" @click="exportToExcel">Экспорт в Excel</button>
         </div>
 
-        <v-table :columns="(table.columns)" :rows="(table.rows)"></v-table>
+        <v-table :columns="(table.columns)" :rows="(table.rows)" table-id="report_table"></v-table>
 
         <v-modal v-if="userModal.is_open.value" @close="userModal.close">
             <h2>Выбрать сотрудника</h2>
@@ -63,6 +68,7 @@
             </div>
         </v-modal>
     </div>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <!-- <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script> -->
     <!-- <script src="./vue.js"></script> -->
     <script src="./composables.js"></script>
@@ -131,8 +137,8 @@
 
                     try {
                         const resp = await api.reports.polls({
-                            poll_id: pollSelection.selected.value.id || undefined,
-                            coll_id: userSelection.selected.value.id || undefined
+                            poll_id: pollSelection.selected.value?.id || undefined,
+                            coll_id: userSelection.selected.value?.id || undefined
                         })
 
                         table.columns = resp.data.columns
@@ -154,6 +160,21 @@
                     table.rows = []
                 }
 
+                const exportToExcel = () => {
+                    var wb = XLSX.utils.table_to_book(document.getElementById("report_table"));
+                    const date = new Date();
+                    const formattedDate = date.toLocaleString('ru-RU', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    }).replace(/[.,\s\/]/g, '_').replace(/_+/g, '_');
+
+                    XLSX.writeFile(wb, `report_${formattedDate}.xlsx`, {raw: true});
+                }
+
                 return {
                     table,
                     userSelection,
@@ -164,7 +185,8 @@
                     pollSearch,
                     onClickListItem,
                     buildReport,
-                    clearAll
+                    clearAll,
+                    exportToExcel
                 }
             }
         })
