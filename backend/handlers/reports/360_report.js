@@ -74,6 +74,19 @@ function AddColumn(columns, value, key)
     )
 }
 
+function AddRow(rows, person_info)
+{
+    rows.push({
+        person_fullname: person_info.name,
+        manager_fullname: "-",
+        person_position: person_info.position_name,
+        person_sub: person_info.position_parent_name,
+        person_org: person_info.org_name,
+        person_stage: "-",
+        manager_stage: "-"
+    })
+}
+
 // Функция выбора анкет по конкретному пользователю
 function GetPersonalPas(pas, person_id)
 {
@@ -101,6 +114,8 @@ function GetCollaboratorInfo(coll_id)
             <USE FORM="//wtv/ms_general.xmd"/>\
             <person_form>\
                 <id TYPE="integer"/>\
+                <INHERIT TYPE="person_name_base"/>\
+                <name TYPE="string" EXPR="fullname"/>\
                 <position_name TYPE="string"/>\
                 <position_parent_name TYPE="string"/>\
                 <org_name TYPE="string"/>\
@@ -108,16 +123,14 @@ function GetCollaboratorInfo(coll_id)
         </SPXML-FORM>\
     ';
 
-    var _form_name = "x-local://wtv/wtv_coll_short_info.xmd";
+    var _form_name = "x-local://wtv/coll_info_for_360_report.xmd";
 
     DropFormsCache("*" + _form_name + "*"); // TODO: Remove
     if (GetOptCachedForm(_form_name) == undefined) {
         RegisterFormFromStr(_form_name, _form_xml);
     }
 
-    Log("GetOptCachedForm: " + GetOptCachedForm(_form_name));
-
-    return OpenDoc(UrlFromDocID(Int(coll_id), "ignore-top-elem-name=1;form="+_form_name));
+    return ToJsObject(OpenDoc(UrlFromDocID(Int(coll_id)), "ignore-top-elem-name=1;form="+_form_name).TopElem);
 }
 // ============================================================================
 
@@ -188,11 +201,11 @@ function BuildReport(appr_id, coll_id)
 
     for (_person_id in _persons_pas)
     {
-        _coll_info = GetCollaboratorInfo(Int(_person_id)).TopElem;
-        Log(tools.object_to_text(_coll_info, "json"));
+        _person_info = GetCollaboratorInfo(Int(_person_id));
+        AddRow(_rows, _person_info);
     }
 
-    SendResponse(true, "success", {columns: _columns, rows: _rows, data: _persons_pas});
+    SendResponse(true, "success", {columns: _columns, rows: _rows});
 }
 // ============================================================================
 
