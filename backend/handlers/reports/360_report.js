@@ -108,14 +108,16 @@ function GetCollaboratorInfo(coll_id)
         </SPXML-FORM>\
     ';
 
-    var _form_name = "x-local://wtv/coll_info_for_assessment_report.xmd";
+    var _form_name = "x-local://wtv/wtv_coll_short_info.xmd";
 
     DropFormsCache("*" + _form_name + "*"); // TODO: Remove
     if (GetOptCachedForm(_form_name) == undefined) {
         RegisterFormFromStr(_form_name, _form_xml);
     }
 
-    return OpenDoc(UrlFromDocID(Int(coll_id), "ignore-top-elem-name=1;form=" + _form_name));
+    Log("GetOptCachedForm: " + GetOptCachedForm(_form_name));
+
+    return OpenDoc(UrlFromDocID(Int(coll_id), "ignore-top-elem-name=1;form="+_form_name));
 }
 // ============================================================================
 
@@ -183,6 +185,12 @@ function BuildReport(appr_id, coll_id)
     }
 
     SetColumns(_columns, _coll_pas_max_count, _staff_pas_max_count);
+
+    for (_person_id in _persons_pas)
+    {
+        _coll_info = GetCollaboratorInfo(Int(_person_id)).TopElem;
+        Log(tools.object_to_text(_coll_info, "json"));
+    }
 
     SendResponse(true, "success", {columns: _columns, rows: _rows, data: _persons_pas});
 }
