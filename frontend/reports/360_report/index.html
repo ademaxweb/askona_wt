@@ -27,7 +27,7 @@
         <v-table ref="report_table" :table="table" table-id="report_table" base-file-name="test_report"></v-table>
 
         <v-modal v-if="userModal.is_open" @close="userModal.close">
-            <h2>Выбрать сотрудника</h2>
+            <h2>Выбор сотрудника</h2>
 
             <input
                 class="input py-xl px-l w-full"
@@ -49,7 +49,7 @@
       
       
         <v-modal v-if="procedureModal.is_open" @close="procedureModal.close">
-            <h2>Выбрать опрос</h2>
+            <h2>Выбор процедуры оценки</h2>
 
             <input
                 class="input py-xl px-l w-full"
@@ -157,13 +157,16 @@
                 }
 
                 const buildReport = async () => {
-                    if (!procedureSelection.is_selected.value || !userselection.is_selected.value) return;
+                    if (!procedureSelection.is_selected.value || !userSelection.is_selected.value) return;
 
                     try {
                         const resp = await api.reports.assessment_appraises({
                             appr_id: procedureSelection.selected.value?.id,
                             person_id: userSelection.selected.value?.id
                         })
+
+                        table.rows = resp.data.rows
+                        table.columns = resp.data.columns
                     } catch (e) {
                         console.log(e)
                     }
@@ -181,6 +184,7 @@
                     procedureSearch,
                     userModal,
                     procedureModal,
+                    onClickListItem,
                     clearAll,
                     buildReport
                 }

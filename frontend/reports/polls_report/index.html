@@ -24,7 +24,7 @@
             <button class="button btn-primary p-l" @click="exportToExcel">Экспорт в Excel</button>
         </div>
 
-        <v-table ref="report_table" :table="table" table-id="report_table" base-file-name="test_report"></v-table>
+        <v-table ref="report_table" :table="table" table-id="report_table" base-file-name="report"></v-table>
 
         <v-modal v-if="userModal.is_open.value" @close="userModal.close">
             <h2>Выбрать сотрудника</h2>

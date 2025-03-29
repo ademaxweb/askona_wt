@@ -140,8 +140,8 @@ function setColumns(columns, collPas, staffPas) {
 function addColumn(columns, columnTitle, columnValue) {
     columns.push(
         {
-            label: columnTitle,
-            name: columnValue,
+            value: columnTitle,
+            key: columnValue,
         }
     )
 }
