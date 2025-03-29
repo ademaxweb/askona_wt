@@ -1,14 +1,19 @@
-/* --------------- Functions --------------- */
 Request.RespContentType = 'application/json';
-
+// =============================   LOGS   =====================================
 var _log_tag = "assessment_report";
 EnableLog(_log_tag);
 
 function Log(message) {
     LogEvent(_log_tag, message);
 }
+// ============================================================================
 
-function SendResponse(success, message, data) {
+
+
+// ===========================   FUNCTIONS   ==================================
+// Функция отправки ответа на запрос
+function SendResponse(success, message, data)
+{
     Response.Write(tools.object_to_text({
         success: success,
         message: message,
@@ -16,332 +21,202 @@ function SendResponse(success, message, data) {
     }, "json"))
 }
 
-function StringifyObjectValues(obj) {
-    for (k in obj) {
-        obj[k] = String(obj[k]);
-    }
-    return obj
-}
-
-function setCompetenceLine(oResult, oSelfCompetence, oManagerCompetence, collPas, staffPas, compIndex) {
-    oResult.competenceName = getCompetenceName(oSelfCompetence);
-    oResult.selfScore = replaceNumberSeparator( oSelfCompetence.mark_value);
-    // oResult.managerScore = replaceNumberSeparator( oManagerCompetence.mark_value );
-
-    if( oManagerCompetence != null )
-    {
-        oResult.managerScore = oManagerCompetence.mark_value != "N" ? replaceNumberSeparator( oManagerCompetence.mark_value ) : "N";
-    }
-    else
-    {
-        oResult.managerScore = 'N';
-    }
-
-    for(collPa in collPas) {
-        oResult["coll_" + Int(collPa.expert_person_id)] = replaceNumberSeparator( collPa.competences[compIndex].mark_value );
-    }
-
-    for(staffPa in staffPas) {
-        oResult["staff_" + Int(staffPa.expert_person_id)] = replaceNumberSeparator( staffPa.competences[compIndex].mark_value );
-    }
-}
-
-
-function setIndicatorLine(oResult, oCompetence, oSelfIndicator, oManagerIndicator, collPas, staffPas, compIndex, indicIndex) {
-    oResult.competenceName = getCompetenceName(oCompetence);
-    oResult.indicatorName = getIndicatorName(oSelfIndicator);
-
-    oResult.selfScore = oSelfIndicator.mark != "N" ? replaceNumberSeparator( oSelfIndicator.mark_value ) : "N";
-    if( oManagerIndicator != null )
-    {
-        oResult.managerScore = oManagerIndicator.mark != "N" ? replaceNumberSeparator( oManagerIndicator.mark_value ) : "N";
-    }
-    else
-    {
-        oResult.managerScore = 'N';
-    }
-
-    for(collPa in collPas) {
-        _mark = collPa.competences[compIndex].indicators[indicIndex].mark;
-        oResult["coll_" + Int(collPa.expert_person_id)] = _mark != "N" ? replaceNumberSeparator( collPa.competences[compIndex].indicators[indicIndex].mark_value ) : "N";
-    }
-
-    for(staffPa in staffPas) {
-        _mark = staffPa.competences[compIndex].indicators[indicIndex].mark_value
-        oResult["staff_" + Int(staffPa.expert_person_id)] = _mark != "N" ? replaceNumberSeparator( staffPa.competences[compIndex].indicators[indicIndex].mark_value ) : "N";
-    }
-}
-
-
-function resetResultObject(
-    PrimaryKey,
-    selfFullname,
-    managerFullname,
-    selfPositionName,
-    selfPositionParentName,
-    selfOrgName,
-    currentStageSelf,
-    currentStageManager
-) {
+// Функция парса параметров запроса
+function ParseQueryParams()
+{
     return {
-        PrimaryKey: String(PrimaryKey),
-        selfFullname: String(selfFullname),
-        managerFullname: String(managerFullname),
-        selfPositionName: String(selfPositionName),
-        selfPositionParentName: String(selfPositionParentName),
-        selfOrgName: String(selfOrgName),
-        currentStageSelf: String(currentStageSelf),
-        currentStageManager: String(currentStageManager),
+        coll_id: Request.Query.GetOptProperty("coll_id", null),
+        appr_id: Request.Query.GetOptProperty("appr_id", null)
     }
 }
 
-function getCompetenceName(oCompetence) {
-    return tools.open_doc(oCompetence.competence_id).TopElem.name;
+// Функция приведения XML элемента к JS объекту
+function ToJsObject(xmlElem) {
+    var elem;
+    var robj = {};
+    for (elem in xmlElem)
+    {
+        robj.SetProperty(elem.Name, RValue(elem));
+    }
+    return robj;
 }
 
+// Функция заполнения шапки (колонок) таблицы
+function SetColumns(columns, colls_count, staff_count)
+{
+    AddColumn(columns, "Оцениваемый", "person_fullname");
+    AddColumn(columns, "Руководитель", "manager_fullname");
+    AddColumn(columns, "Должность", "person_position");
+    AddColumn(columns, "Подразделение", "person_sub");
+    AddColumn(columns, "Организация", "person_org");
+    AddColumn(columns, "Текущий этап (Оцениваемый)", "person_stage");
+    AddColumn(columns, "Текущий этап (Руководитель)", "manager_stage");
 
-function getIndicatorName(oIndicator) {
-    return tools.open_doc(oIndicator.indicator_id).TopElem.name;
-}
-
-
-function replaceNumberSeparator(number) {
-    return String(number)
-    // return StrReplace( String(number), '.', ',');
-}
-
-
-function setColumns(columns, collPas, staffPas) {
-
-
-    addColumn(columns, "Оцениваемый", "selfFullname");
-    addColumn(columns, "Руководитель", "managerFullname");
-    addColumn(columns, "Должность", "selfPositionName");
-    addColumn(columns, "Подразделение", "selfPositionParentName");
-    addColumn(columns, "Организация", "selfOrgName");
-    addColumn(columns, "Текущий этап (Оцениваемый)", "currentStageSelf");
-    addColumn(columns, "Текущий этап (Руководитель)", "currentStageManager");
-
-    addColumn(columns, "Название компетенции", "competenceName");
-    addColumn(columns, "Название индикатора", "indicatorName");
-    addColumn(columns, "Оценка (Оцениваемый)", "selfScore");
-    addColumn(columns, "Оценка (Руководитель)", "managerScore");
-
-    for(collPa in collPas) {
-        addColumn(columns, "Оценка (Коллега) " + collPa.expert_person_fullname, "coll_" + Int(collPa.expert_person_id));
+    for (i = 0; i < colls_count; i++)
+    {
+        AddColumn(columns, "Оценка (Коллега " + (i+1) + ")", "coll_" + (i+1));
     }
 
-    for(staffPa in staffPas) {
-        addColumn(columns, "Оценка (Подчиненный) " + staffPa.expert_person_fullname, "staff_" + Int(staffPa.expert_person_id));
+    for (i = 0; i < colls_count; i++)
+    {
+        AddColumn(columns, "Оценка (Коллега " + (i+1) + ")", "staff_" + (i+1));
     }
 }
 
-
-function addColumn(columns, columnTitle, columnValue) {
+// Функция добавление колонки в таблицу 
+function AddColumn(columns, value, key)
+{
     columns.push(
         {
-            value: columnTitle,
-            key: columnValue,
+            value: value,
+            key: key
         }
     )
 }
 
-/* --------------- Main program --------------- */
-try {
+// Функция выбора анкет по конкретному пользователю
+function GetPersonalPas(pas, person_id)
+{
 
-    _columns = [];
-    _rows = [];
+    var _personal_pas = ArraySelectByKey(pas, person_id, "person_id");
+    var _personal_staff_pas = ArraySelectByKey(_personal_pas, "staff", "status");
+    var _personal_coll_pas = ArraySelectByKey(_personal_pas, "coll", "status");
+    var _personal_manager_pas = ArraySelectByKey(_personal_pas, "manager", "status");
+    var _personal_self_pas = ArraySelectByKey(_personal_pas, "self", "status")
 
+    return {
+        staff: _personal_staff_pas,
+        coll: _personal_coll_pas,
+        manager: ArrayOptFirstElem(_personal_manager_pas, null),
+        self: ArrayOptFirstElem(_personal_self_pas, null)
+    }
+}
 
-    // APPR_ID = _CRITERIONS[0].value;
-    // PERSON_ID = _CRITERIONS[1].value;
-    APPR_ID = Request.Query.GetOptProperty("appr_id", null);
-    PERSON_ID = Request.Query.GetOptProperty("person_id", null);
-    if (APPR_ID == null) {
-        throw "Не выбрана процедура оценки"
+// Функция получения кратких сведений о сотруднике
+function GetCollaboratorInfo(coll_id)
+{
+    var _form_xml = '\
+        <?xml version="1.0" encoding="utf-8"?>\
+        <SPXML-FORM>\
+            <USE FORM="//wtv/ms_general.xmd"/>\
+            <person_form>\
+                <id TYPE="integer"/>\
+                <position_name TYPE="string"/>\
+                <position_parent_name TYPE="string"/>\
+                <org_name TYPE="string"/>\
+            </person_form>\
+        </SPXML-FORM>\
+    ';
+
+    var _form_name = "x-local://wtv/coll_info_for_assessment_report.xmd";
+
+    DropFormsCache("*" + _form_name + "*"); // TODO: Remove
+    if (GetOptCachedForm(_form_name) == undefined) {
+        RegisterFormFromStr(_form_name, _form_xml);
     }
 
-    if (PERSON_ID == null) {
-        throw "Не выбран сотрудник"
-    }
-    _usedPas = [];
-
-    var _pas_query = "for $pa in pas where $pa/assessment_appraise_id="+Int(APPR_ID)+" and $pa/person_id="+Int(PERSON_ID)+" return $pa"
-
-    Log("Pas query: " + _pas_query);
-
-    _pas = ArraySelectAll(XQuery(_pas_query));
+    return OpenDoc(UrlFromDocID(Int(coll_id), "ignore-top-elem-name=1;form=" + _form_name));
+}
+// ============================================================================
 
 
+// ============================   SQL   =======================================
+function SQL_GetPAs(appr_id, coll_id)
+{
+    var _sql =
+        "SELECT \
+            id, \
+            person_id, \
+            expert_person_id, \
+            status \
+        FROM dbo.pas \
+        WHERE \
+            assessment_appraise_type = 'competence_appraisal' \
+            AND assessment_appraise_id = " + appr_id + " \
+            AND person_id ";
 
-
-    // Инициализация карточек, нужных для отчета
-    _selfPa = ArrayOptFind(_pas, "This.status=='self' && This.assessment_appraise_type=='competence_appraisal' && This.person_id == " + Int(PERSON_ID));
-
-
-    _managerPa = ArrayOptFind(_pas, "This.status=='manager' && This.assessment_appraise_type=='competence_appraisal' && This.person_id == " + Int(PERSON_ID), undefined);
-
-    Log(tools.object_to_text(_managerPa, 'json'));
-
-    _collPas = ArraySelect(_pas, "This.status=='coll' && This.assessment_appraise_type=='competence_appraisal' && This.person_id == " + Int(PERSON_ID));
-    _staffPas = ArraySelect(_pas, "This.status=='staff' && This.assessment_appraise_type=='competence_appraisal' && This.person_id == " + Int(PERSON_ID));
-
-    _teCollPas = [];
-    _teStaffPas = [];
-
-    setColumns(_columns, _collPas, _staffPas);
-
-    for(_collPa in _collPas) {
-        _teCollPas.push( tools.open_doc(_collPa.id).TopElem );
-    }
-
-    for(_staffPa in _staffPas) {
-        _teStaffPas.push( tools.open_doc(_staffPa.id).TopElem );
-    }
-
-
-    _teSelfPa = tools.open_doc(_selfPa.id).TopElem;
-    workflow_state_name = 'Этап не определен';
-    if( _managerPa != undefined )
+    if (coll_id == null || coll_id == "")
     {
-        _teManagerPa = tools.open_doc(_managerPa.id).TopElem;
-        _managerFullname = tools.open_doc(_teManagerPa.expert_person_id).TopElem.fullname;
-        workflow_state_name = _teManagerPa.workflow_state_name;
+        _sql += "IS NOT NULL";
     }
     else
     {
-        _managerFullname = 'Нет оценки руковдителя';
-    }
-    _tePerson = tools.open_doc(_teSelfPa.person_id).TopElem;
-
-    alert("360: " + 1);
-
-    _resultObject = resetResultObject(
-        _tePerson.id,
-        _tePerson.fullname,
-        _managerFullname,
-        _tePerson.position_name,
-        _tePerson.position_parent_name,
-        _tePerson.org_name,
-        _teSelfPa.workflow_state_name,
-        workflow_state_name
-        // _teManagerPa.workflow_state_name
-    );
-
-    alert("360: " + 2);
-
-    // Добавление основных компетенций и индикаторов в отчет
-    for(i = 0; i < ArrayCount(_teSelfPa.competences); i++) {
-
-        _resultObject = resetResultObject(
-            _tePerson.id,
-            _tePerson.fullname,
-            _managerFullname,
-            _tePerson.position_name,
-            _tePerson.position_parent_name,
-            _tePerson.org_name,
-            _teSelfPa.workflow_state_name,
-            workflow_state_name
-            // _teManagerPa.workflow_state_name
-        );
-
-        _oSelfCompetence = _teSelfPa.competences[i];
-        try
-        {
-            _oManagerCompetence = _teManagerPa.competences[i];
-        }
-        catch(ex)
-        {
-            _oManagerCompetence = null;
-        }
-
-        alert("360: " + 3);
-        setCompetenceLine(_resultObject, _oSelfCompetence, _oManagerCompetence, _teCollPas, _teStaffPas, i);
-        alert("360: " + 4);
-
-
-        _rows.push(StringifyObjectValues(_resultObject));
-
-        for(j = 0; j < ArrayCount(_oSelfCompetence.indicators); j++) {
-
-            alert("360: " + 5);
-
-            _resultObject = resetResultObject(
-                _tePerson.id,
-                _tePerson.fullname,
-                _managerFullname,
-                _tePerson.position_name,
-                _tePerson.position_parent_name,
-                _tePerson.org_name,
-                _teSelfPa.workflow_state_name,
-                workflow_state_name
-                // _teManagerPa.workflow_state_name
-            );
-
-            _oSelfIndicator = _oSelfCompetence.indicators[j];
-            // _oManagerIndicator = _oManagerCompetence.indicators[j];
-            try
-            {
-                _oManagerIndicator = _oManagerCompetence.indicators[j];
-            }
-            catch(ex)
-            {
-                _oManagerIndicator = null;
-            }
-
-
-            setIndicatorLine(_resultObject, _oSelfCompetence, _oSelfIndicator, _oManagerIndicator, _teCollPas, _teStaffPas, i, j);
-
-            alert("360: " + 6);
-            _rows.push(StringifyObjectValues(_resultObject));
-        }
+        _sql += ("= " + coll_id)
     }
 
-    alert("360: " + 7);
+    return _sql;
+}
+// ============================================================================
 
-    _resultObject = resetResultObject(
-        _tePerson.id,
-        _tePerson.fullname,
-        _managerFullname,
-        _tePerson.position_name,
-        _tePerson.position_parent_name,
-        _tePerson.org_name,
-        _teSelfPa.workflow_state_name,
-        workflow_state_name
-        // _teManagerPa.workflow_state_name
-    );
 
-    _resultObject.competenceName = "Итоговая оценка";
-    _resultObject.selfScore = replaceNumberSeparator(_teSelfPa.overall);
+// ===========================   REPORT   =====================================
+// Функция построения отчета
+function BuildReport(appr_id, coll_id)
+{
+    var _columns = [];
+    var _rows = [];
+
+    var _sql = SQL_GetPAs(appr_id, coll_id);
+    var _pas = ArrayExtract(XQuery("sql: " + _sql), "ToJsObject(This)");
+
+    if (!ArrayCount(_pas))
+    {
+        Log("Не найдены анкеты для следующих параметров: appr_id="+appr_id+" coll_id="+coll_id);    
+        throw "pas_not_found";
+    }
+
+    // Список сотрудников, для которых найдены анкеты
+    var _person_ids = ArraySelectDistinctKeys(_pas, "This.person_id");
+
+    var _persons_pas = {}; // Список анкет по каждому сотруднику
+    var _coll_pas_max_count = 0; // Максимальное кол-во анкет, заполненняемых коллегами
+    var _staff_pas_max_count = 0;  // Максимальное кол-во анкет, заполняемых подчинёнными
+
+    for (_person_id in _person_ids)
+    {
+        _personal_pas = GetPersonalPas(_pas, _person_id);
+
+        _coll_pas_max_count = ArrayCount(_personal_pas.coll) > _coll_pas_max_count ? ArrayCount(_personal_pas.coll) : _coll_pas_max_count;
+        _staff_pas_max_count = ArrayCount(_personal_pas.staff) > _staff_pas_max_count ? ArrayCount(_personal_pas.staff) : _staff_pas_max_count;
+
+        _persons_pas.SetProperty(_person_id, _personal_pas);
+    }
+
+    SetColumns(_columns, _coll_pas_max_count, _staff_pas_max_count);
+
+    SendResponse(true, "success", {columns: _columns, rows: _rows, data: _persons_pas});
+}
+// ============================================================================
+
+
+
+// ============================   MAIN   ======================================
+try
+{
+    var _params = ParseQueryParams();
+
+    Log("Новый запрос с параметрами: " + tools.object_to_text(_params, "json"));
+
     try
     {
-        _resultObject.managerScore = replaceNumberSeparator(_teManagerPa.overall);
+        OpenDoc(UrlFromDocID(Int(_params.appr_id))).TopElem;
     }
-    catch(ex)
+    catch(e)
     {
-        _resultObject.managerScore = 'N';
+        Log(String(e));
+        throw "wrong_appr_id"
     }
 
-    for(_teCollPa in _teCollPas) {
-        _resultObject["coll_" + Int(_teCollPa.expert_person_id )] = replaceNumberSeparator( _teCollPa.overall );
-    }
-
-    for(_teStaffPa in _teStaffPas) {
-        _resultObject["staff_" + Int(_teStaffPa.expert_person_id)] = replaceNumberSeparator( _teStaffPa.overall );
-    }
-
-    _rows.push(StringifyObjectValues(_resultObject));
-
-    alert("360: " + 8);
-
-    SendResponse(true, "Отчет успшено сформирован", {
-        columns: _columns,
-        rows: _rows
-    })
+    BuildReport(_params.appr_id, _params.coll_id)
 }
-catch(e)
+// ============================================================================
+
+
+
+// ===========================   ERRORS   =====================================
+catch (err)
 {
-    Log(String(e));
-    //alert(e);
-    SendResponse(false, e.message, String(e))
+    Log(String(err));
+    SendResponse(false, err.message, {})
 }
+// ============================================================================
