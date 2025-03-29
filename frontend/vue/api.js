@@ -38,8 +38,6 @@ const useApi = () => {
 }
 
 const useApiSearch = (api) => {
-    
-
     const search = async ({catalog, field, text}) => {
         return api.send(
             '/pp/Ext5/extjs_json_collection_data.html',
@@ -71,7 +69,15 @@ const useApiSearch = (api) => {
         })
     }
 
-    return {search, collaborators, polls}
+    const assessment_appraises = async(name) => {
+        return search({
+            catalog: "assessment_appraises",
+            field: "name",
+            text: name
+        })
+    }
+
+    return {search, collaborators, polls, assessment_appraises}
 }
 
 
@@ -88,5 +94,17 @@ const useApiReports = (api) => {
         )
     }
 
-    return {polls}
+    const assessment_appraises = async ({appr_id, person_id}) => {
+        return api.send(
+            '/custom_web_template.html',
+            "GET",
+            {
+                object_code: "askona_assessment_report_handler",
+                appr_id,
+                person_id
+            }
+        )
+    }
+
+    return {polls, assessment_appraises}
 }

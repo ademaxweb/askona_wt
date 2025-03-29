@@ -10,12 +10,12 @@
     <div id="app">
 
         <div class="container">
-            <h1>Отчёт по опросам</h1>
+            <h1 class="page_heading">Отчёт по оценке сотрудников</h1>
         </div>
 
         <div class="container py-l grid cols-2">
             <button class="button p-l" @click="userModal.open">{{userSelection.selected_text}}</button>
-            <button class="button p-l" @click="pollModal.open">{{pollSelection.selected_text}}</button>
+            <button class="button p-l" @click="procedureModal.open">{{procedureSelection.selected_text}}</button>
         </div>
 
         <div class="container py-l">
@@ -26,21 +26,21 @@
 
         <v-table ref="report_table" :table="table" table-id="report_table" base-file-name="test_report"></v-table>
 
-        <v-modal v-if="userModal.is_open.value" @close="userModal.close">
+        <v-modal v-if="userModal.is_open" @close="userModal.close">
             <h2>Выбрать сотрудника</h2>
 
             <input
                 class="input py-xl px-l w-full"
                 type="text"
                 placeholder="ФИО сотрудника"
-                v-model.trim="userSearch.search_str.value"
+                v-model.trim="userSearch.search_str"
                 @keyup.enter="userSearch.search"
             >
 
-            <p class="w-full text-center" v-if="!userSearch.has_searched.value">Пока ничего не найдено. Нажмите Enter для поиска.</p>
+            <p class="w-full text-center" v-if="!userSearch.has_searched">Пока ничего не найдено. Нажмите Enter для поиска.</p>
 
             <div class="list cols-2 w-full">
-                <div class="list__item item-bordered pointer" v-for="col in userSearch.searched.value" @click="onClickListItem('coll', col)">
+                <div class="list__item item-bordered pointer" v-for="col in userSearch.searched" @click="onClickListItem('coll', col)">
                     <p>{{ col.fullname }}</p>
                     <p class="text-secondary">{{col.position_parent_name}}</p>
                 </div>
@@ -48,21 +48,21 @@
         </v-modal>
       
       
-        <v-modal v-if="pollModal.is_open.value" @close="pollModal.close">
+        <v-modal v-if="procedureModal.is_open" @close="procedureModal.close">
             <h2>Выбрать опрос</h2>
 
             <input
                 class="input py-xl px-l w-full"
                 type="text"
-                placeholder="Название опроса"
-                v-model.trim="pollSearch.search_str.value"
-                @keyup.enter="pollSearch.search"
+                placeholder="Название процедуры оценки"
+                v-model.trim="procedureSearch.search_str"
+                @keyup.enter="procedureSearch.search"
             >
 
-            <p class="w-full text-center" v-if="!pollSearch.has_searched.value">Пока ничего не найдено. Нажмите Enter для поиска.</p>
+            <p class="w-full text-center" v-if="!procedureSearch.has_searched">Пока ничего не найдено. Нажмите Enter для поиска.</p>
           
             <div class="list cols-2 w-full">
-                <div class="list__item item-bordered pointer" v-for="p in pollSearch.searched.value" @click="onClickListItem('poll', p)">
+                <div class="list__item item-bordered pointer" v-for="p in procedureSearch.searched" @click="onClickListItem('procedure', p)">
                     <p>{{ p.name }}</p>
                 </div>
             </div>
@@ -80,59 +80,62 @@
         
         const app = createApp({
             setup() {
-
                 const api = useApi()
 
+                // Table
                 const table = Vue.reactive({
                     columns: [],
                     rows: []
                 })
 
                 const report_table = Vue.useTemplateRef('report_table')
-
                 const exportToExcel = () => {
-                    console.log(report_table.value);
-
                     if (!report_table.value) return;
 
                     report_table.value.exportToExcel();
                 }
+                
 
+                // Selections
                 const userSelection = useSingleSelection({
                     placeholder: "Все сотрудники (нажмите, чтобы выбрать)",
                     display_key: "fullname"
                 })
 
-                const pollSelection = useSingleSelection({
-                    placeholder: "Выбрать опрос",
+                const procedureSelection = useSingleSelection({
+                    placeholder: "Выберите процедуру оценки",
                     display_key: "name"
                 })
 
-                const userModal = useModal()
-                const pollModal = useModal()
-
-                const userSearch = useSearch(async () => {
+                // Search
+                const userSearch = Vue.reactive(useSearch(async () => {
                     try {
-                        const resp = await api.search.collaborators(userSearch.search_str.value)
+                        const resp = await api.search.collaborators(userSearch.search_str)
                         return resp.results
                     } catch (e) {
                         return []
                     }
-                })
-                const pollSearch = useSearch(async () => {
+                }))
+
+                const procedureSearch = Vue.reactive(useSearch(async () => {
                     try {
-                        const resp = await api.search.polls(pollSearch.search_str.value)
+                        const resp = await api.search.assessment_appraises(procedureSearch.search_str)
                         return resp.results
-                    } catch(e) {
+                    } catch (e) {
                         return []
                     }
-                })
+                }))
 
+                
+
+                // Modals
+                const userModal = Vue.reactive(useModal())
+                const procedureModal = Vue.reactive(useModal())
                 const onClickListItem = (type, selected) => {
                     switch (type) {
-                        case "poll":
-                            pollModal.close()
-                            pollSelection.select(selected)
+                        case "procedure":
+                            procedureModal.close()
+                            procedureSelection.select(selected)
                             break
 
                         case "coll":
@@ -141,46 +144,45 @@
                             break
                     }
                 }
-                
+
+
+                // Report
+                const clearAll = () => {
+                    userSearch.clear()
+                    procedureSearch.clear()
+                    userSelection.clear()
+                    procedureSelection.clear()
+                    table.columns = []
+                    table.rows = []
+                }
+
                 const buildReport = async () => {
-                    if (!pollSelection.is_selected.value) return;
+                    if (!procedureSelection.is_selected.value || !userselection.is_selected.value) return;
 
                     try {
-                        const resp = await api.reports.polls({
-                            poll_id: pollSelection.selected.value?.id || undefined,
-                            coll_id: userSelection.selected.value?.id || undefined
+                        const resp = await api.reports.assessment_appraises({
+                            appr_id: procedureSelection.selected.value?.id,
+                            person_id: userSelection.selected.value?.id
                         })
-
-                        table.columns = resp.data.columns
-                        table.rows = resp.data.rows
-                        
                     } catch (e) {
                         console.log(e)
                     }
                 }
 
-                const clearAll = () => {
-                    userSearch.clear()
-                    pollSearch.clear()
-                    userSelection.clear()
-                    pollSelection.clear()
-                    table.columns = []
-                    table.rows = []
-                }
+
 
 
                 return {
                     table,
+                    exportToExcel,
                     userSelection,
-                    pollSelection,
-                    userModal,
-                    pollModal,
+                    procedureSelection,
                     userSearch,
-                    pollSearch,
-                    onClickListItem,
-                    buildReport,
+                    procedureSearch,
+                    userModal,
+                    procedureModal,
                     clearAll,
-                    exportToExcel
+                    buildReport
                 }
             }
         })
