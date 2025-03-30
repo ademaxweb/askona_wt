@@ -52,6 +52,7 @@ body {
   
   .table_wrapper {
     max-width: 100%;
+    max-height: 500px;
     overflow: auto;
     -webkit-box-shadow: 0 5px 10px 0 rgba(34, 60, 80, 0.2);
     -moz-box-shadow: 0 5px 10px 0 rgba(34, 60, 80, 0.2);

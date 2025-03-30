@@ -157,12 +157,12 @@
                 }
 
                 const buildReport = async () => {
-                    if (!procedureSelection.is_selected.value || !userSelection.is_selected.value) return;
+                    if (!procedureSelection.is_selected.value) return;
 
                     try {
                         const resp = await api.reports.assessment_appraises({
-                            appr_id: procedureSelection.selected.value?.id,
-                            person_id: userSelection.selected.value?.id
+                            appr_id: procedureSelection.selected.value?.id || undefined,
+                            person_id: userSelection.selected.value?.id || undefined
                         })
 
                         table.rows = resp.data.rows

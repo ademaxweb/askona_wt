@@ -100,8 +100,8 @@ const useApiReports = (api) => {
             "GET",
             {
                 object_code: "askona_assessment_report_handler",
-                appr_id,
-                person_id
+                appr_id: appr_id,
+                coll_id: person_id
             }
         )
     }
