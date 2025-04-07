@@ -1,9 +1,9 @@
 /* --------------- Log --------------- */
-
-EnableLog('/reports_email/main', true);
+_log_tag = "email_report_hyper_rainbow"
+EnableLog(_log_tag);
 
 function log(message) {
-    LogEvent('/reports_email/main', message);
+    LogEvent(_log_tag, message);
 }
 
 /* --------------- Functions --------------- */
@@ -386,7 +386,7 @@ for(_groupId in _groupsIds) {
             } 
         } 
     
-        // _groupTitle = "<div><b>Отчет для группы: " + _teGroup.name + "</b><div>";
+        _groupTitle = "<div><b>Отчет для группы: " + _teGroup.name + "</b><div>";
         _tableData = "";
 
         // Для процента по обученности
