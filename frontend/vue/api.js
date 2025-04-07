@@ -106,5 +106,16 @@ const useApiReports = (api) => {
         )
     }
 
-    return {polls, assessment_appraises}
+    const pd = async ({appr_id, person_id}) => {
+        return api.send(
+            '/custom_web_template.html',
+            "GET",
+            {
+                object_code: "askona_pd_report_handler",
+                appr_id: appr_id
+            }
+        )
+    }
+
+    return {polls, assessment_appraises, pd}
 }

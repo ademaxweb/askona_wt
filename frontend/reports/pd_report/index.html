@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="../../vue/styles.css">
+</head>
+<body>
+    <div id="app">
+
+        <div class="container">
+            <h1 class="page_heading">Отчёт по оценке PD</h1>
+        </div>
+
+        <div class="container py-l grid cols-1">
+            <button class="button p-l" @click="procedureModal.open">{{procedureSelection.selected_text}}</button>
+        </div>
+
+        <div class="container py-l">
+            <button class="button btn-primary p-l" @click="clearAll">Очистить</button>
+            <button class="button btn-primary p-l" @click="buildReport">Построить отчет</button>
+            <button class="button btn-primary p-l" @click="exportToExcel">Экспорт в Excel</button>
+        </div>
+
+        <v-table ref="report_table" :table="table" table-id="report_table" base-file-name="test_report"></v-table>
+      
+        <v-modal v-if="procedureModal.is_open" @close="procedureModal.close">
+            <h2>Выбор процедуры оценки</h2>
+
+            <input
+                class="input py-xl px-l w-full"
+                type="text"
+                placeholder="Название процедуры оценки"
+                v-model.trim="procedureSearch.search_str"
+                @keyup.enter="procedureSearch.search"
+            >
+
+            <p class="w-full text-center" v-if="!procedureSearch.has_searched">Пока ничего не найдено. Нажмите Enter для поиска.</p>
+          
+            <div class="list cols-2 w-full">
+                <div class="list__item item-bordered pointer" v-for="p in procedureSearch.searched" @click="onClickListItem('procedure', p)">
+                    <p>{{ p.name }}</p>
+                </div>
+            </div>
+        </v-modal>
+    </div>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <!-- <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script> -->
+    <script src="./../../vue/vue.js"></script>
+    <script src="./../../vue/composables.js"></script>
+    <script src="./../../vue/api.js"></script>
+    <script src="./../../vue/components/tables/VTable.js"></script>
+    <script src="./../../vue/components/modals/VModal.js"></script>
+    <script>
+        const {createApp} = Vue;
+        
+        const app = createApp({
+            setup() {
+                const api = useApi()
+
+                // Table
+                const table = Vue.reactive({
+                    columns: [],
+                    rows: []
+                })
+
+                const report_table = Vue.useTemplateRef('report_table')
+                const exportToExcel = () => {
+                    if (!report_table.value) return;
+
+                    report_table.value.exportToExcel();
+                }
+                
+
+                // Selections
+                const procedureSelection = useSingleSelection({
+                    placeholder: "Выберите процедуру оценки",
+                    display_key: "name"
+                })
+
+                // Search
+                const procedureSearch = Vue.reactive(useSearch(async () => {
+                    try {
+                        const resp = await api.search.assessment_appraises(procedureSearch.search_str)
+                        return resp.results
+                    } catch (e) {
+                        return []
+                    }
+                }))
+
+                // Modals
+                const procedureModal = Vue.reactive(useModal())
+                const onClickListItem = (type, selected) => {
+                    switch (type) {
+                        case "procedure":
+                            procedureModal.close()
+                            procedureSelection.select(selected)
+                            break
+                    }
+                }
+
+
+                // Report
+                const clearAll = () => {
+                    procedureSearch.clear()
+                    procedureSelection.clear()
+                    table.columns = []
+                    table.rows = []
+                }
+
+                const buildReport = async () => {
+                    if (!procedureSelection.is_selected.value) return;
+
+                    try {
+                        const resp = await api.reports.pd({
+                            appr_id: procedureSelection.selected.value?.id || undefined
+                        })
+                        table.rows = resp.data.rows
+                        table.columns = resp.data.columns
+                    } catch (e) {
+                        console.log(e)
+                    }
+                }
+
+
+                return {
+                    table,
+                    exportToExcel,
+                    procedureSelection,
+                    procedureSearch,
+                    procedureModal,
+                    onClickListItem,
+                    clearAll,
+                    buildReport
+                }
+            }
+        })
+
+        app.component('VTable', VTable)
+        app.component('VModal', VModal)
+        app.mount("#app")
+    </script>
+</body>
+</html>
