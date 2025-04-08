@@ -25,10 +25,10 @@ function personPassTestsCounter(personId, startDate, endDate)
     return ArrayCount(testLearnings);
 }
 
+
 /* ---------- Main program ---------- */
 try
 {
-
 
 _RESULT = [];
 
@@ -36,6 +36,7 @@ _counter = 0;
 _counterCourses = 0;
 _counterEvents = 0;
 _counterTests = 0;
+
 _startDate = _CRITERIONS[0].value;
 _endDate = _CRITERIONS[1].value;
 
@@ -63,7 +64,6 @@ for(col in _allCollaborators) {
     _counterCourses += passCourses;
     _counterEvents += passEvents;
     _counterTests += passTests;
-
 }
 
 // alert("Всего проходило обучение: " + _counter + " сотрудников.");
