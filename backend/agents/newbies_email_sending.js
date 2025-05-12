@@ -125,7 +125,7 @@ try
         _message = ArrayMerge(_group_links, "This", "<br>");
         
         Debug("Отправляется сообщение: " + _message + " для руководителя: " + OptInt(_group.manager.id, 0));
-        //_successfull_send = tools.create_notification("newbie_went_to_work", OptInt(_group.manager.id, 0), _message);
+        _successfull_send = tools.create_notification("newbie_went_to_work", OptInt(_group.manager.id, 0), _message);
     }
     
 }
